@@ -1,7 +1,6 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { toast } from '../lib/feedback';
-import { useStore } from '../lib/store';
 import type { Session } from '../lib/types';
 import { requestVision, visionUrl } from '../lib/vision';
 import { dueLabel } from './Commit';
@@ -37,7 +36,6 @@ export function VisionCard({ s, busy = false }: { s: Session; busy?: boolean }) 
 }
 
 export function VisionStep({ s, onSave }: { s: Session; onSave: (patch?: Partial<Session>) => void }) {
-  const canEdit = useStore((st) => st.canEdit);
   const [busy, setBusy] = useState(false);
   const [phase, setPhase] = useState(0);
   const [error, setError] = useState('');
@@ -86,7 +84,6 @@ export function VisionStep({ s, onSave }: { s: Session; onSave: (patch?: Partial
           התמונה נבנית מהסשן כולו: הנושא, הקלפים, התובנה וההתחייבות. היא מצלמת את הרגע שבו הצעד כבר נעשה, ונשמרת בקיר ההתחייבויות כדי שתפגוש אותה עד שתבצע.
         </p>
         {!ready && <p className="status-line">כדי לבנות תמונה צריך קודם התחייבות או תובנה.</p>}
-        {!canEdit && <p className="status-line">יצירת תמונה זמינה במכשיר שנכנס עם מפתח עריכה, דרך הלוגו A&I.</p>}
         {busy && (
           <ol className="vision-phases" aria-live="polite">
             {PHASES.map((p, i) => (
@@ -102,7 +99,7 @@ export function VisionStep({ s, onSave }: { s: Session; onSave: (patch?: Partial
           </p>
         )}
         <div className="row wrap">
-          <button className="btn solid" onClick={create} disabled={busy || !ready || !canEdit}>
+          <button className="btn solid" onClick={create} disabled={busy || !ready}>
             {busy ? 'יוצר...' : s.vision ? 'תמונה אחרת' : 'יצירת התמונה'}
           </button>
         </div>

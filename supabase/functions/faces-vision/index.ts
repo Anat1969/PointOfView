@@ -2,12 +2,12 @@
 // מקבל סשן (נושא, קלפים, תובנה, התחייבות), Claude בונה פרומפט לפי השיטה של ענת
 // (משפט זיקוק, פרומפט בעברית למידג'רני, ופרומפט באנגלית למחולל), fal מייצר תמונה
 // ריבועית, והיא נשמרת בדלי faces-media תחת visions/ עם כתובת קבועה.
-// הרשאה: מפתח עריכה בכותרת x-editor-key (sha256 ב-faces_editor_keys). סודות משותפים: ANTHROPIC_API_KEY, FAL_API_KEY.
+// פתוח לכולם, בלי מפתח (בקשת ענת). הגנה על העלות: עד 40 תמונות בשעה. סודות משותפים: ANTHROPIC_API_KEY, FAL_API_KEY.
 import Anthropic from "npm:@anthropic-ai/sdk";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-editor-key",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 const json = (body: unknown, status = 200) =>
@@ -58,15 +58,6 @@ async function rest(path: string, init: RequestInit = {}) {
   });
   if (!r.ok) throw new Error(`DB ${r.status}: ${await r.text()}`);
   return r.status === 204 ? null : await r.json();
-}
-
-async function hasEditorKey(req: Request): Promise<boolean> {
-  const key = req.headers.get("x-editor-key") ?? "";
-  if (key.length < 16) return false;
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(key));
-  const hash = [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
-  const rows = await rest(`faces_editor_keys?select=key_hash&key_hash=eq.${hash}`);
-  return Array.isArray(rows) && rows.length > 0;
 }
 
 function falKey(): string | undefined {
@@ -232,7 +223,6 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
   try {
-    if (!(await hasEditorKey(req))) throw new UserError("יצירת תמונה זמינה במכשיר שנכנס עם מפתח עריכה (לוגו A&I).", 403);
     const body = await req.json().catch(() => ({}));
     const sessionId = clip(body.sessionId, 64).replace(/[^\w-]/g, "");
     if (!sessionId) throw new UserError("סשן לא תקין");

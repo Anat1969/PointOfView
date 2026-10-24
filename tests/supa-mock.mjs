@@ -28,7 +28,8 @@ export async function mockSupabase(ctx, db) {
     const req = route.request();
     const url = new URL(req.url());
     const method = req.method();
-    const isEditor = req.headers()['x-editor-key'] === TEST_KEY;
+    // עריכה חופשית לכולם (בקשת ענת): faces_is_admin() מחזירה true
+    const isEditor = true;
     db.requests.push(`${method} ${url.pathname}${url.search}`);
     if (db.offline) return route.fulfill({ status: 503, body: 'down' });
 
