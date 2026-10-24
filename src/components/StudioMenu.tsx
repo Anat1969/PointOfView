@@ -3,7 +3,6 @@ import { toast } from '../lib/feedback';
 import { DEV_CHAT_URL, RESEARCH_URL } from '../lib/links';
 import { go } from '../lib/router';
 import { setState, useStore } from '../lib/store';
-import { forgetEditorKey, saveEditorKey } from '../lib/supa';
 
 interface MenuItem {
   label: string;
@@ -51,32 +50,11 @@ export function StudioMenu() {
             ['/faces/library', 'עריכת ספריית פנים'],
             ['/faces/words', 'עריכת השתקפויות'],
             ['/coaching/library', 'עריכת קלפי האימון'],
-          ].map(([path, label]) => ({ label, disabled: !editing, onSelect: () => go(path) })),
-          {
-            label: 'ניתוק המכשיר מהעריכה',
-            onSelect: () => {
-              forgetEditorKey();
-              setState({ editMode: false });
-              location.reload();
-            },
-          },
+          ].map(([path, label]) => ({ label, onSelect: () => (setState({ editMode: true }), go(path)) })),
         ]
       : sync === 'offline'
         ? [{ label: 'אין חיבור לספרייה', hint: 'העריכה תחזור עם החיבור', disabled: true }]
-        : [
-            {
-              label: 'כניסה לעריכה במכשיר הזה',
-              hint: 'מפתח עריכה',
-              onSelect: () => {
-                const key = prompt('מפתח עריכה')?.trim();
-                if (!key) return;
-                if (key.length < 16) return toast('מפתח העריכה קצר מדי', 'error');
-                saveEditorKey(key);
-                setState({ editMode: true });
-                location.reload();
-              },
-            },
-          ];
+        : [{ label: 'הספרייה נטענת', disabled: true }];
     el.status = editing ? 'עריכה פעילה' : '';
   }, [canEdit, editMode, editing, sync]);
 

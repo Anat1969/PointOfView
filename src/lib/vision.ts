@@ -3,7 +3,7 @@ import { FOCUS_CARDS, STATIONS } from './coach';
 import { MIRRORS, moodOf } from './facesJourney';
 import { gameOf } from './games';
 import { getState } from './store';
-import { ANON_KEY, SUPABASE_URL, currentEditorKey, publicUrl } from './supa';
+import { ANON_KEY, SUPABASE_URL, publicUrl } from './supa';
 import type { Session } from './types';
 
 export const visionUrl = (s: Session) => (s.vision?.path ? publicUrl(s.vision.path) : undefined);
@@ -35,11 +35,9 @@ export function visionPayload(s: Session, variant?: string) {
 export type VisionResult = { path: string; distill: string; prompt: string; title?: string };
 
 export async function requestVision(s: Session, variant?: string): Promise<VisionResult> {
-  const key = currentEditorKey();
-  if (!key) throw new Error('יצירת תמונה זמינה במכשיר שנכנס עם מפתח עריכה (לוגו A&I).');
   const r = await fetch(`${SUPABASE_URL}/functions/v1/faces-vision`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}`, 'x-editor-key': key },
+    headers: { 'Content-Type': 'application/json', apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` },
     body: JSON.stringify(visionPayload(s, variant)),
   });
   const data = await r.json().catch(() => null);
