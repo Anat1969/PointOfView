@@ -1,10 +1,13 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRef, useState } from 'react';
+import { LibraryNote } from '../components/LibraryNote';
 import { Tilt } from '../components/Tilt';
 import { confirmAction, toast } from '../lib/feedback';
-import { uid } from '../lib/id';
-import { ACCEPTED, MAX_FILE_MB, deleteImage, prepareImage, putImage } from '../lib/images';
-import { getState, setState, useStore } from '../lib/store';
+import { ACCEPTED, MAX_FILE_MB, prepareImage } from '../lib/images';
+import { addFaceImage, deleteFace, restoreStarterFaces } from '../lib/library';
+import { STARTER_FACE_COUNT } from '../lib/starter';
+import { getState, useStore } from '../lib/store';
+import type { Face } from '../lib/types';
 import { MAX_FACES } from '../lib/types';
 import { useFaceImages } from '../lib/useImages';
 
@@ -12,6 +15,7 @@ type UploadError = { file: string; reason: string };
 
 export function Faces() {
   const faces = useStore((s) => s.faces);
+  const canEdit = useStore((s) => s.canEdit && s.sync === 'ready');
   const urls = useFaceImages();
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(0);
@@ -19,6 +23,7 @@ export function Faces() {
   const [over, setOver] = useState(false);
 
   const upload = async (files: File[]) => {
+    if (!canEdit) return;
     const errs: UploadError[] = [];
     let room = MAX_FACES - getState().faces.length;
     const valid: File[] = [];
@@ -36,10 +41,8 @@ export function Faces() {
     for (const f of valid) {
       try {
         const blob = await prepareImage(f);
-        const id = uid();
-        await putImage(id, blob);
-        setState({ faces: [...getState().faces, { id, name: f.name.replace(/\.[^.]+$/, ''), createdAt: Date.now() }] });
-        added++;
+        if (await addFaceImage(blob, f.name.replace(/\.[^.]+$/, ''))) added++;
+        else errs.push({ file: f.name, reason: 'ההעלאה לספרייה המשותפת נכשלה. כדאי לנסות שוב.' });
       } catch {
         errs.push({ file: f.name, reason: 'לא הצלחתי לקרוא את התמונה. ייתכן שהקובץ פגום.' });
       }
@@ -50,19 +53,16 @@ export function Faces() {
     if (errs.length && !added) toast('ההעלאה נכשלה', 'error');
   };
 
-  const remove = (id: string, name: string) =>
+  const remove = (f: Face) =>
     confirmAction({
-      title: `למחוק את "${name}"?`,
-      body: 'התמונה תימחק מהספרייה. בסשנים שמורים יופיע במקומה קלף חסר.',
+      title: `למחוק את "${f.name}"?`,
+      body: f.starter ? 'הדיוקן יוסר מהספרייה המשותפת. אפשר להחזיר אותו בכל עת.' : 'התמונה תימחק מהספרייה המשותפת. בסשנים שמורים יופיע במקומה קלף חסר.',
       action: 'מחיקה',
-      onConfirm: async () => {
-        await deleteImage(id);
-        setState({ faces: getState().faces.filter((f) => f.id !== id) });
-        toast('התמונה נמחקה');
-      },
+      onConfirm: () => deleteFace(f),
     });
 
   const full = faces.length >= MAX_FACES;
+  const starterMissing = STARTER_FACE_COUNT - faces.filter((f) => f.starter).length;
 
   return (
     <div className="page">
@@ -73,40 +73,50 @@ export function Faces() {
           <motion.span animate={{ width: `${(faces.length / MAX_FACES) * 100}%` }} />
         </div>
         <p className="mono">
-          {faces.length} / {MAX_FACES}
+          {faces.length} / {MAX_FACES} · {faces.filter((f) => f.starter).length} דיוקנאות מאוירים · {faces.filter((f) => f.image_path).length} תמונות שהועלו
         </p>
+        <LibraryNote />
       </header>
 
-      <div
-        className={`dropzone ${over ? 'over' : ''} ${full ? 'disabled' : ''}`}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setOver(true);
-        }}
-        onDragLeave={() => setOver(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          setOver(false);
-          upload(Array.from(e.dataTransfer.files));
-        }}
-      >
-        <p>{full ? 'הספרייה מלאה. כדי להוסיף, יש למחוק פנים קיימות.' : 'גוררים לכאן תמונות JPG או PNG, או בוחרים מהמחשב.'}</p>
-        <button className="btn solid" disabled={full || busy > 0} onClick={() => input.current?.click()}>
-          {busy > 0 ? `מעלה... נותרו ${busy}` : 'העלאת תמונות'}
-        </button>
-        <input
-          ref={input}
-          type="file"
-          accept="image/jpeg,image/png"
-          multiple
-          hidden
-          data-testid="face-input"
-          onChange={(e) => {
-            upload(Array.from(e.target.files ?? []));
-            e.target.value = '';
+      {canEdit && (
+        <div
+          className={`dropzone ${over ? 'over' : ''} ${full ? 'disabled' : ''}`}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setOver(true);
           }}
-        />
-      </div>
+          onDragLeave={() => setOver(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setOver(false);
+            upload(Array.from(e.dataTransfer.files));
+          }}
+        >
+          <p>{full ? 'הספרייה מלאה. כדי להוסיף, יש למחוק פנים קיימות.' : 'גוררים לכאן תמונות JPG או PNG, או בוחרים מהמחשב.'}</p>
+          <div className="row wrap">
+            {starterMissing > 0 && !full && (
+              <button className="btn ghost" onClick={restoreStarterFaces}>
+                החזרת דיוקנאות הפתיחה ({starterMissing})
+              </button>
+            )}
+            <button className="btn solid" disabled={full || busy > 0} onClick={() => input.current?.click()}>
+              {busy > 0 ? `מעלה... נותרו ${busy}` : 'העלאת תמונות'}
+            </button>
+          </div>
+          <input
+            ref={input}
+            type="file"
+            accept="image/jpeg,image/png"
+            multiple
+            hidden
+            data-testid="face-input"
+            onChange={(e) => {
+              upload(Array.from(e.target.files ?? []));
+              e.target.value = '';
+            }}
+          />
+        </div>
+      )}
 
       <AnimatePresence>
         {errors.length > 0 && (
@@ -131,7 +141,12 @@ export function Faces() {
       {faces.length === 0 ? (
         <div className="empty">
           <h2>הספרייה ריקה</h2>
-          <p>הצעד הבא: להעלות את תמונות הפנים. עד {MAX_FACES} תמונות, והן נשמרות במכשיר הזה בלבד.</p>
+          <p>{canEdit ? `הצעד הבא: להעלות תמונות פנים, או להחזיר את ${STARTER_FACE_COUNT} דיוקנאות הפתיחה.` : 'הספרייה עוד לא נטענה. אם אין חיבור, כדאי לנסות שוב בעוד רגע.'}</p>
+          {canEdit && (
+            <button className="btn solid" onClick={restoreStarterFaces}>
+              טעינת דיוקנאות הפתיחה
+            </button>
+          )}
         </div>
       ) : (
         <motion.ul className="face-grid" layout>
@@ -149,10 +164,12 @@ export function Faces() {
                 <Tilt className="face-tile">
                   {urls.get(f.id) ? <img src={urls.get(f.id)} alt={f.name} loading="lazy" /> : <div className="skeleton" />}
                   <div className="face-meta">
-                    <span className="mono">{String(i + 1).padStart(2, '0')}</span>
-                    <button className="btn ghost xs on-dark" onClick={() => remove(f.id, f.name)} aria-label={`מחיקת ${f.name}`}>
-                      מחיקה
-                    </button>
+                    <span className="mono">{f.name}</span>
+                    {canEdit && (
+                      <button className="btn ghost xs on-dark" onClick={() => remove(f)} aria-label={`מחיקת ${f.name}`}>
+                        מחיקה
+                      </button>
+                    )}
                   </div>
                 </Tilt>
               </motion.li>

@@ -35,6 +35,7 @@ export function Home() {
   const refl = useStore((s) => s.reflections);
   const sessions = useStore((s) => s.sessions);
   const working = useStore((s) => s.working);
+  const sync = useStore((s) => s.sync);
   const urls = useFaceImages();
 
   const ring: RingItem[] = useMemo(() => {
@@ -72,7 +73,7 @@ export function Home() {
             <br />
             מילה
           </h1>
-          <p>שליפה אקראית של פנים והשתקפויות, הערה לכל קלף, ותצוגה מלאה לקבוצה. הכל נשמר במכשיר הזה.</p>
+          <p>שליפה אקראית של פנים והשתקפויות, הערה לכל קלף, ותצוגה מלאה לקבוצה. הספריות משותפות לכל המכשירים, והסשנים נשמרים במכשיר שלך.</p>
         </motion.div>
       </section>
 
@@ -99,7 +100,7 @@ export function Home() {
         ))}
       </section>
 
-      {!faces.length && !refl.words.length && (
+      {sync !== 'loading' && !faces.length && !refl.words.length && (
         <motion.p className="empty-hint" {...rise(6)}>
           הצעד הבא: להעלות תמונות פנים לספרייה ולהזין מילים להשתקפויות. אחר כך כל סשן שולף מהן.
         </motion.p>
