@@ -81,12 +81,15 @@ export function StudioMenu({ install, onInstall, onCopy }: { install: boolean; o
                 >
                   {editing ? 'מצב עריכה פעיל. לכיבוי' : 'הפעלת מצב עריכה'}
                 </button>
-                <button className="btn ghost sm on-dark" onClick={() => toPage('/faces')} disabled={!editing}>
-                  עריכת ספריית פנים
-                </button>
-                <button className="btn ghost sm on-dark" onClick={() => toPage('/reflections')} disabled={!editing}>
-                  עריכת השתקפויות
-                </button>
+                {[
+                  ['/faces/library', 'עריכת ספריית פנים'],
+                  ['/faces/words', 'עריכת השתקפויות'],
+                  ['/coaching/library', 'עריכת קלפי האימון'],
+                ].map(([path, label]) => (
+                  <button key={path} className="btn ghost sm on-dark" onClick={() => toPage(path)} disabled={!editing}>
+                    {label}
+                  </button>
+                ))}
                 <button
                   className="btn ghost xs on-dark"
                   onClick={() => {

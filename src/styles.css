@@ -171,7 +171,7 @@ button, input, textarea { font: inherit; color: inherit; }
 }
 .resume:focus-visible { outline: 2px solid var(--refl); }
 
-.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+.tiles { display: grid; grid-template-columns: repeat(var(--tiles, 4), minmax(0, 1fr)); gap: 18px; }
 .tilt { position: relative; border-radius: 20px; will-change: transform; }
 .glare { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; mix-blend-mode: soft-light; }
 .tile { height: 100%; background: linear-gradient(165deg, #fdfcfa, #e8e6e1); box-shadow: var(--shadow-2), inset 0 1px 0 #fff; border: 1px solid rgba(255,255,255,.6); }
@@ -493,3 +493,91 @@ textarea { resize: vertical; line-height: 1.55; }
 .studio-btn.can-install .studio-mark { position: relative; }
 .studio-btn.can-install .studio-mark::after { content: ''; position: absolute; top: 1px; inset-inline-end: 1px; width: 10px; height: 10px; border-radius: 50%; background: #8fb3d9; border: 2px solid #1d1e21; }
 .studio-panel { max-height: calc(100dvh - var(--bar-h) - 24px); overflow: auto; }
+
+/* ---------- דף הכלים: קופסאות משחק בעומק ---------- */
+.suite-head h1 { font-weight: 200; font-size: clamp(48px, 8vw, 108px); line-height: 1.02; margin: 8px 0 14px; letter-spacing: -.01em; }
+.suite-head p { max-width: 560px; color: var(--ink-2); font-size: 18px; font-weight: 300; margin: 0; }
+.boxes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(20px, 4vw, 56px); padding: 30px 0 10px; }
+.box-wrap { perspective: 1400px; }
+.game-box { border-radius: 26px; }
+.box-btn { all: unset; box-sizing: border-box; cursor: pointer; position: relative; display: block; width: 100%; aspect-ratio: 1.45; border-radius: 26px; transform-style: preserve-3d; }
+.box-btn:focus-visible { outline: 3px solid var(--refl); outline-offset: 6px; }
+.box-lid {
+  position: absolute; inset: 0; border-radius: 26px; padding: clamp(20px, 3vw, 34px); display: flex; flex-direction: column; justify-content: flex-end; gap: 6px;
+  transform: translateZ(40px); color: #f4f2ee; overflow: hidden;
+  box-shadow: 0 50px 90px -30px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.25);
+}
+.box-faces .box-lid { background: radial-gradient(120% 90% at 80% 0%, #8c8274 0%, #4a443c 55%, #2a2622 100%); }
+.box-coaching .box-lid { background: radial-gradient(120% 90% at 80% 0%, #4a78a6 0%, #23466b 55%, #10233a 100%); }
+.box-lid::before { content: ''; position: absolute; inset: 14px; border: 1px solid rgba(255,255,255,.22); border-radius: 16px; pointer-events: none; }
+.box-lid .label { color: rgba(255,255,255,.7); }
+.box-title { font-size: clamp(36px, 5vw, 64px); font-weight: 200; line-height: 1; }
+.box-tag { font-size: 18px; font-weight: 300; color: rgba(255,255,255,.85); }
+.box-meta { color: rgba(255,255,255,.65); }
+.box-enter { align-self: flex-start; margin-top: 10px; padding: 8px 18px; border-radius: 999px; background: #f2f1ee; color: var(--ink); font-weight: 500; font-size: 15px; }
+.box-side { position: absolute; inset: 0; border-radius: 26px; transform: translateZ(10px) translateY(14px); background: rgba(0,0,0,.35); filter: blur(2px); }
+.box-fan { position: absolute; inset-inline-start: 50%; top: 10%; width: 0; height: 0; transform: translateZ(70px); z-index: 2; pointer-events: none; }
+.fan-card {
+  position: absolute; width: clamp(70px, 9vw, 112px); aspect-ratio: 5 / 7; border-radius: 10px; overflow: hidden; background: #eee; border: 3px solid #fff;
+  box-shadow: 0 18px 30px -10px rgba(0,0,0,.5);
+  transform: translateX(calc(-50% + var(--k) * 46%)) translateY(calc(-30% + (var(--k) * var(--k)) * 6px)) rotate(calc(var(--k) * 9deg));
+  transition: transform .5s cubic-bezier(.2,.7,.2,1);
+}
+.game-box:hover .fan-card { transform: translateX(calc(-50% + var(--k) * 62%)) translateY(calc(-44% + (var(--k) * var(--k)) * 6px)) rotate(calc(var(--k) * 12deg)); }
+.fan-card img { width: 100%; height: 100%; object-fit: cover; }
+.fan-card em { position: absolute; inset: 0; display: grid; place-items: center; font-style: normal; font-weight: 300; font-size: 15px; color: #fff; background: radial-gradient(120% 90% at 30% 10%, #4a78a6, var(--refl-deep)); }
+.fan-card b { position: absolute; inset: auto 0 0; padding: 3px 4px; font-size: 11px; font-weight: 500; text-align: center; background: rgba(250,248,244,.92); color: var(--ink); }
+@media (max-width: 760px) {
+  .boxes { grid-template-columns: minmax(0, 1fr); padding-top: 50px; gap: 70px; }
+  .fan-card { width: 58px; border-width: 2px; }
+  .box-fan { top: 4%; }
+  .box-btn { aspect-ratio: 1.3; }
+}
+
+/* ---------- קלף משחק האימון: תמונה ומילה ---------- */
+.card-face.coach { background: #222; }
+.card-face.coach img { width: 100%; height: 100%; object-fit: cover; }
+.coach-word {
+  position: absolute; inset: auto 0 0; padding: 6% 6% 7%; text-align: center; font-weight: 400; color: var(--ink);
+  font-size: clamp(10px, 11cqw, 44px); line-height: 1.1;
+  background: linear-gradient(180deg, rgba(250,248,244,.86), rgba(250,248,244,.97)); backdrop-filter: blur(6px);
+  border-top: 1px solid rgba(255,255,255,.7);
+}
+.card-face.coach.big .coach-word { font-size: clamp(22px, 9cqw, 64px); font-weight: 300; }
+.card-face.coach::after { border-color: rgba(255,255,255,.4); }
+.ring-caption { position: absolute; inset: auto 0 0; padding: 5px 4px; font-size: 12px; font-weight: 500; text-align: center; background: rgba(250,248,244,.92); color: var(--ink); }
+.coach-tile { aspect-ratio: 5 / 7; overflow: hidden; border-radius: 14px; box-shadow: var(--shadow-2); background: #333; }
+.coach-tile img { width: 100%; height: 100%; object-fit: cover; }
+.coach-band { position: absolute; inset: auto 0 0; padding: 8px; background: rgba(250,248,244,.94); text-align: center; font-size: 17px; transform: translateZ(18px); }
+.coach-band input { width: 100%; text-align: center; padding: 4px 6px; font-size: 16px; background: #fff; }
+.coach-del { position: absolute; top: 8px; inset-inline-end: 8px; transform: translateZ(22px); }
+.mini-coach .mini-layer, .mini-coach .mini-top { background: linear-gradient(160deg, #e9e3d6 0%, #c5bba8 100%); }
+.mini-coach .mini-top { background: linear-gradient(180deg, #5b7fa3 0%, #2b4c70 62%, #f4f1ea 62.5%, #e8e2d5 100%); }
+.mini-coach .mini-top .mono { color: var(--ink-2); }
+
+/* ---------- ארבעה שלבים: ארבעה נתיבים ---------- */
+.lanes { list-style: none; margin: 0; padding: 4px; width: 100%; height: 100%; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.lane {
+  display: grid; grid-template-rows: var(--lane-head) minmax(0, 1fr); min-width: 0; min-height: 0; border-radius: 18px; padding: 6px 6px 8px;
+  background: linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,.18)); box-shadow: inset 0 0 0 1px rgba(23,24,27,.07);
+  transition: box-shadow .3s, background .3s;
+}
+.lane.next { box-shadow: inset 0 0 0 2px rgba(35,70,107,.35); background: linear-gradient(180deg, rgba(35,70,107,.08), rgba(255,255,255,.2)); }
+.lane-head { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-rows: auto auto; align-items: center; gap: 0 8px; padding: 4px 6px; min-width: 0; }
+.lane-head strong { font-weight: 400; font-size: 22px; }
+.lane-q { grid-column: 1 / -1; font-size: 13px; color: var(--muted); line-height: 1.35; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.lane-draw { grid-row: 1; grid-column: 3; }
+.lane-cards { display: grid; gap: 8px; justify-content: center; align-content: start; min-height: 0; overflow: hidden; padding-top: 4px; }
+.drawer-q { margin: 0; padding: 10px 12px; border-radius: 12px; background: rgba(35,70,107,.08); color: var(--refl-deep); font-size: 15px; }
+@media (max-width: 760px) {
+  .lane { padding: 4px; border-radius: 12px; }
+  .lane-head { grid-template-columns: minmax(0, 1fr); padding: 2px; gap: 2px; }
+  .lane-head .mono, .lane-q { display: none; }
+  .lane-head strong { font-size: 14px; text-align: center; }
+  .lane-draw { grid-row: 2; grid-column: 1; min-height: 28px; padding: 0 6px; font-size: 12px; }
+}
+
+/* תצוגת קבוצה: יחידה של כמה קלפים ותווית שלב */
+.carousel-card.is-pair.n3 { aspect-ratio: 15.6 / 7; }
+.carousel-card.is-pair.n4 { aspect-ratio: 20.8 / 7; }
+.stage-chip { position: absolute; top: -18px; inset-inline-start: 50%; transform: translateX(50%); padding: 6px 18px; border-radius: 999px; background: #f2f1ee; color: var(--ink); font-size: 16px; font-weight: 500; box-shadow: var(--shadow-2); }

@@ -13,8 +13,12 @@ export function reflectionDeck(r: Reflections): { refId: string; text?: string }
 
 /** שולף קלף שעוד לא נמצא בסשן. מחזיר null כשהחפיסה ריקה או מוצתה */
 export function drawCard(session: Session, kind: SessionCard['kind'], exclude: string[] = []): SessionCard | null {
-  const { faces, reflections } = getState();
+  const { faces, reflections, coachCards } = getState();
   const used = new Set([...session.cards.filter((c) => c.kind === kind).map((c) => c.refId), ...exclude]);
+  if (kind === 'coach') {
+    const c = pick(coachCards.filter((x) => !used.has(x.id)));
+    return c ? { id: uid(), kind, refId: c.id, text: c.word, note: '' } : null;
+  }
   if (kind === 'face') {
     const f = pick(faces.filter((x) => !used.has(x.id)));
     return f ? { id: uid(), kind, refId: f.id, note: '' } : null;
