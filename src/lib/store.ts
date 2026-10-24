@@ -2,22 +2,29 @@ import { useSyncExternalStore } from 'react';
 import type { Face, Reflections, Session } from './types';
 import { MAX_BLANKS } from './types';
 
+export type SyncStatus = 'loading' | 'ready' | 'offline';
+
 type State = {
+  /** הספריות מגיעות מ-Supabase ונשמרות גם כעותק מקומי לעבודה בלי רשת */
   faces: Face[];
   reflections: Reflections;
+  /** סשנים נשארים במכשיר: ההערות בהם אישיות */
   sessions: Session[];
   /** הסשן הפתוח לעריכה. נשמר כטיוטה, ונכנס להיסטוריה רק בלחיצה על "שמירה" */
   working: Session | null;
+  sync: SyncStatus;
+  canEdit: boolean;
 };
 
-const KEYS = {
-  faces: 'faces.faces',
-  reflections: 'faces.reflections',
+const KEYS: Partial<Record<keyof State, string>> = {
+  faces: 'faces.lib.faces',
+  reflections: 'faces.lib.reflections',
   sessions: 'faces.sessions',
   working: 'faces.working',
-} as const;
+};
 
-function read<T>(key: string, fallback: T): T {
+function read<T>(key: string | undefined, fallback: T): T {
+  if (!key) return fallback;
   try {
     const raw = localStorage.getItem(key);
     return raw ? (JSON.parse(raw) as T) : fallback;
@@ -31,6 +38,8 @@ let state: State = {
   reflections: read(KEYS.reflections, { words: [], blanks: MAX_BLANKS }),
   sessions: read(KEYS.sessions, []),
   working: read(KEYS.working, null),
+  sync: 'loading',
+  canEdit: false,
 };
 
 const listeners = new Set<() => void>();
@@ -38,8 +47,10 @@ const listeners = new Set<() => void>();
 export function setState(patch: Partial<State>) {
   state = { ...state, ...patch };
   for (const k of Object.keys(patch) as (keyof State)[]) {
+    const key = KEYS[k];
+    if (!key) continue;
     try {
-      localStorage.setItem(KEYS[k], JSON.stringify(state[k]));
+      localStorage.setItem(key, JSON.stringify(state[k]));
     } catch {
       /* מכסה מלאה: המצב נשאר בזיכרון */
     }

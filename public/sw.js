@@ -1,4 +1,4 @@
-const CACHE = 'faces-v1';
+const CACHE = 'faces-v2';
 
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => {
@@ -32,7 +32,8 @@ self.addEventListener('fetch', (e) => {
   const cacheable =
     url.origin === self.location.origin ||
     url.host === 'fonts.googleapis.com' ||
-    url.host === 'fonts.gstatic.com';
+    url.host === 'fonts.gstatic.com' ||
+    (url.host.endsWith('.supabase.co') && url.pathname.includes('/storage/v1/object/public/'));
   if (!cacheable) return;
   e.respondWith(
     caches.match(req).then(

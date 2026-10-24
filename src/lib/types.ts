@@ -1,6 +1,14 @@
-export type Face = { id: string; name: string; createdAt: number };
+export type Face = {
+  id: string;
+  name: string;
+  /** קובץ בדלי faces-media */
+  image_path?: string | null;
+  /** מספר דיוקן מאויר מערכת הפתיחה */
+  starter?: number | null;
+  sort?: number;
+};
 
-export type Word = { id: string; text: string };
+export type Word = { id: string; text: string; sort?: number };
 
 export type Reflections = { words: Word[]; blanks: number };
 

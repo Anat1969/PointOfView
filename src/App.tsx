@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect } from 'react';
 import { ConfirmDialog, Toasts } from './components/Feedback';
 import { TopBar } from './components/TopBar';
+import { loadLibrary } from './lib/library';
 import { useRoute } from './lib/router';
 import { Faces } from './pages/Faces';
 import { History } from './pages/History';
@@ -21,6 +22,13 @@ const TITLES: Record<string, string> = {
 
 export function App() {
   const route = useRoute();
+  useEffect(() => {
+    loadLibrary();
+    // ריענון כשחוזרים לחלון, כדי לקבל שינויים ממכשיר אחר
+    const onFocus = () => document.visibilityState === 'visible' && loadLibrary();
+    document.addEventListener('visibilitychange', onFocus);
+    return () => document.removeEventListener('visibilitychange', onFocus);
+  }, []);
   useEffect(() => {
     document.title = TITLES[route.page];
     if (route.page !== 'present') window.scrollTo({ top: 0 });

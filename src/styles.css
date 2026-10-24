@@ -391,3 +391,10 @@ textarea { resize: vertical; line-height: 1.55; }
   .plane { animation: none; }
   .skeleton { animation: none; }
 }
+
+/* ---------- מצב הספרייה ---------- */
+.lib-note { margin: 12px 0 0; padding: 10px 14px; border-radius: 12px; background: rgba(255,255,255,.55); border: 1px solid var(--line); color: var(--ink-2); font-size: 14px; max-width: 640px; }
+.lib-note.edit { background: rgba(35,70,107,.08); border-color: rgba(35,70,107,.25); color: var(--refl-deep); }
+.lib-note.warn { background: #fbecea; border-color: rgba(163,51,44,.3); color: #5e1d19; }
+.word-text { font-size: 18px; font-weight: 300; padding: 6px 8px; overflow-wrap: anywhere; }
+.face-meta .mono { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
