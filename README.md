@@ -1,6 +1,14 @@
 # Point of View
 
-סדרת כלים לתהליכי התפתחות ושינוי. דף הבית מציג את הכלים, וכל משחק עומד בפני עצמו: Faces (פנים והשתקפויות) ומשחק האימון (תמונה ומילה, בארבעה שלבים או חופשי).
+## [לכניסה לאפליקציה: faces-pointofview.vercel.app](https://faces-pointofview.vercel.app)
+
+| כלי | קישור ישיר |
+|---|---|
+| דף הכלים | https://faces-pointofview.vercel.app |
+| Faces | https://faces-pointofview.vercel.app/#/faces |
+| משחק האימון | https://faces-pointofview.vercel.app/#/coaching |
+
+סדרת כלים לתהליכי התפתחות ושינוי. דף הבית מציג את הכלים, וכל משחק עומד בפני עצמו: Faces (פנים והשתקפויות) ומשחק האימון (תמונה ומילה, בתהליך מודרך במפת שלוש תחנות או חופשי).
 
 ## Faces
 
