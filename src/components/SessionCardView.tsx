@@ -14,6 +14,7 @@ export function FlipCard({ card, url, index }: { card: SessionCard; url?: string
       >
         <div className="flip-front">
           <CardFace card={card} url={url} />
+          {card.note && <span className="note-flag">הערה</span>}
         </div>
         <div className={`flip-back back-${card.kind}`}>
           <span className="mono">{String(index + 1).padStart(2, '0')}</span>

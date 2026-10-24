@@ -14,6 +14,8 @@ type State = {
   working: Session | null;
   sync: SyncStatus;
   canEdit: boolean;
+  /** פעולות העריכה מוצגות רק אחרי הפעלה מתפריט A&I */
+  editMode: boolean;
 };
 
 const KEYS: Partial<Record<keyof State, string>> = {
@@ -21,6 +23,7 @@ const KEYS: Partial<Record<keyof State, string>> = {
   reflections: 'faces.lib.reflections',
   sessions: 'faces.sessions',
   working: 'faces.working',
+  editMode: 'faces.editMode',
 };
 
 function read<T>(key: string | undefined, fallback: T): T {
@@ -40,6 +43,7 @@ let state: State = {
   working: read(KEYS.working, null),
   sync: 'loading',
   canEdit: false,
+  editMode: read('faces.editMode', false),
 };
 
 const listeners = new Set<() => void>();
@@ -64,6 +68,9 @@ function subscribe(l: () => void) {
   listeners.add(l);
   return () => listeners.delete(l);
 }
+
+/** עריכה בפועל: יש הרשאה, הספרייה מחוברת, ומצב העריכה הופעל */
+export const selectEditing = (s: State) => s.canEdit && s.editMode && s.sync === 'ready';
 
 export function useStore<T>(select: (s: State) => T): T {
   return useSyncExternalStore(subscribe, () => select(state));

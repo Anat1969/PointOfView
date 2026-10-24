@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { LibraryNote } from '../components/LibraryNote';
 import { confirmAction, toast } from '../lib/feedback';
 import { addWords, deleteWord, renameWord, setBlanks } from '../lib/library';
-import { getState, useStore } from '../lib/store';
+import { getState, selectEditing, useStore } from '../lib/store';
 import type { Word } from '../lib/types';
 import { MAX_BLANKS, MAX_REFLECTIONS, MAX_WORDS } from '../lib/types';
 
@@ -61,7 +61,7 @@ function WordTile({ w, i, canEdit }: { w: Word; i: number; canEdit: boolean }) {
 
 export function Reflections() {
   const { words, blanks } = useStore((s) => s.reflections);
-  const canEdit = useStore((s) => s.canEdit && s.sync === 'ready');
+  const canEdit = useStore(selectEditing);
   const [draft, setDraft] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);

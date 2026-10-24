@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useEffect } from 'react';
 import { ConfirmDialog, Toasts } from './components/Feedback';
 import { TopBar } from './components/TopBar';
@@ -44,13 +44,12 @@ export function App() {
         <span className="plane p3" />
       </div>
       <TopBar route={route} />
-      <main className={route.page === 'present' ? 'main present-main' : 'main'}>
-        <AnimatePresence mode="wait">
-          <motion.div
+      <main className={route.page === 'present' ? 'main present-main' : route.page === 'session' ? 'main stage-main' : 'main'}>
+        {/* כניסה מונפשת לכל דף. בלי AnimatePresence: במצב wait הוא החזיק עותק ישן של הדף אחרי מעבר מהשולחן */}
+        <motion.div
             key={pageKey}
             initial={{ opacity: 0, rotateX: 6, y: 24, transformPerspective: 1200 }}
             animate={{ opacity: 1, rotateX: 0, y: 0 }}
-            exit={{ opacity: 0, rotateX: -4, y: -12 }}
             transition={{ duration: 0.35, ease: [0.2, 0.7, 0.2, 1] }}
           >
             {route.page === 'home' && <Home />}
@@ -60,7 +59,6 @@ export function App() {
             {route.page === 'session' && <SessionPage id={route.id} />}
             {route.page === 'present' && <Present id={route.id} index={route.index} />}
           </motion.div>
-        </AnimatePresence>
       </main>
       <Toasts />
       <ConfirmDialog />

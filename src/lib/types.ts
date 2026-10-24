@@ -22,7 +22,12 @@ export type SessionCard = {
   /** תמונת מצב של המילה בזמן השליפה, כדי שהיסטוריה לא תשתנה כשעורכים את הספרייה */
   text?: string;
   note: string;
+  /** מזהה זוג: פנים והשתקפות שנשלפו יחד */
+  pair?: string;
 };
+
+/** צורת המשחק קובעת מה נשלף ואיך השולחן מסודר */
+export type GameForm = 'pairs' | 'faces' | 'free';
 
 export type SessionMode = 'personal' | 'group';
 
@@ -30,6 +35,7 @@ export type Session = {
   id: string;
   title: string;
   mode: SessionMode;
+  form?: GameForm;
   participants: string;
   summary: string;
   cards: SessionCard[];
