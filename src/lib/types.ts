@@ -35,12 +35,12 @@ export type SessionCard = {
   note: string;
   /** מזהה זוג: פנים והשתקפות שנשלפו יחד */
   pair?: string;
-  /** שלב בצורת המשחק "ארבעה שלבים" (0 עד 3) */
+  /** תחנה במפת משחק האימון: 0 אני, 1 האחר או הרצוי, 2 החוסם */
   stage?: number;
 };
 
 /** צורת המשחק קובעת מה נשלף ואיך השולחן מסודר */
-export type GameForm = 'pairs' | 'faces' | 'free' | 'stages';
+export type GameForm = 'pairs' | 'faces' | 'free' | 'journey';
 
 export type SessionMode = 'personal' | 'group';
 
@@ -51,6 +51,13 @@ export type Session = {
   title: string;
   mode: SessionMode;
   form?: GameForm;
+  /** תהליך משחק האימון: השלב הנוכחי, הנושא, הפיכת הקלפים, התובנה, כרטיס המיקוד וההתחייבות */
+  step?: number;
+  topic?: string;
+  flipped?: boolean;
+  insight?: string;
+  focus?: number;
+  action?: { what: string; when: string; measure: string };
   participants: string;
   summary: string;
   cards: SessionCard[];

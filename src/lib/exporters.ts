@@ -2,7 +2,7 @@ import type { Session } from './types';
 import { getState } from './store';
 import { isBlank } from './deck';
 import { GAMES, gameOf } from './games';
-import { STAGES } from './coach';
+import { FOCUS_CARDS, STATIONS } from './coach';
 
 function download(name: string, content: string, type: string) {
   const blob = new Blob([content], { type });
@@ -43,20 +43,31 @@ const esc = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
 
 export function exportCSV(sessions: Session[]) {
   const head = ['סשן', 'משחק', 'תאריך', 'סוג', 'משתתפים', 'מספר', 'שלב', 'סוג קלף', 'תוכן', 'הערה'];
-  const rows = sessions.flatMap((s) =>
-    s.cards.map((c, i) => [
+  // שורות של תהליך משחק האימון: נושא, תובנה, כרטיס מיקוד והתחייבות
+  const extra = (s: Session) => {
+    const base = [s.title, GAMES[gameOf(s)].name, new Date(s.createdAt).toLocaleDateString('he-IL'), s.mode === 'group' ? 'קבוצתי' : 'אישי', s.participants, ''];
+    const out: (string | number)[][] = [];
+    if (s.topic) out.push([...base, 'נושא', '', '', s.topic]);
+    if (s.insight) out.push([...base, 'תובנה', '', '', s.insight]);
+    if (s.focus !== undefined) out.push([...base, 'מנוף לפעולה', 'כרטיס מיקוד', FOCUS_CARDS[s.focus] ?? '', '']);
+    if (s.action?.what) out.push([...base, 'מנוף לפעולה', 'התחייבות', s.action.what, `מתי: ${s.action.when} · איך אדע: ${s.action.measure}`]);
+    return out;
+  };
+  const rows = sessions.flatMap((s) => [
+    ...s.cards.map((c, i) => [
       s.title,
       GAMES[gameOf(s)].name,
       new Date(s.createdAt).toLocaleDateString('he-IL'),
       s.mode === 'group' ? 'קבוצתי' : 'אישי',
       s.participants,
       i + 1,
-      c.stage !== undefined ? STAGES[c.stage].name : '',
+      c.stage !== undefined && STATIONS[c.stage] ? STATIONS[c.stage].name : '',
       c.kind === 'face' ? 'פנים' : c.kind === 'coach' ? 'קלף אימון' : 'השתקפות',
       cardLabel(c),
       c.note,
-    ])
-  );
+    ]),
+    ...extra(s),
+  ]);
   const csv = '﻿' + [head, ...rows].map((r) => r.map(esc).join(',')).join('\r\n');
   const name = fileName(sessions);
   download(`${name}.csv`, csv, 'text/csv;charset=utf-8');
