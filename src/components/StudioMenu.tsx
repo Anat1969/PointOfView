@@ -1,12 +1,13 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from '../lib/feedback';
+import { DEV_CHAT_URL, RESEARCH_URL } from '../lib/links';
 import { go } from '../lib/router';
 import { setState, useStore } from '../lib/store';
 import { forgetEditorKey, saveEditorKey } from '../lib/supa';
 
-/** כפתור הלוגו של הסטודיו: מאחוריו כל פעולות העריכה */
-export function StudioMenu() {
+/** כפתור הלוגו של הסטודיו: מאחוריו הקישורים, ההתקנה וכל פעולות העריכה */
+export function StudioMenu({ install, onInstall, onCopy }: { install: boolean; onInstall: () => void; onCopy: () => void }) {
   const [open, setOpen] = useState(false);
   const [key, setKey] = useState('');
   const canEdit = useStore((s) => s.canEdit);
@@ -34,7 +35,7 @@ export function StudioMenu() {
 
   return (
     <div className="studio" ref={ref}>
-      <button className={`studio-btn ${editing ? 'live' : ''}`} onClick={() => setOpen((v) => !v)} aria-expanded={open} aria-controls="studio-panel" aria-label="אד' ענת שטיבלמן A&I, תפריט עריכה">
+      <button className={`studio-btn ${editing ? 'live' : ''} ${install ? 'can-install' : ''}`} onClick={() => setOpen((v) => !v)} aria-expanded={open} aria-controls="studio-panel" aria-label="אד' ענת שטיבלמן A&I, תפריט">
         <span className="studio-mark" aria-hidden="true">
           A<em>&amp;</em>I
         </span>
@@ -51,6 +52,23 @@ export function StudioMenu() {
             transition={{ type: 'spring', stiffness: 320, damping: 26 }}
           >
             <span className="label on-dark">A&amp;I · אד' ענת שטיבלמן</span>
+            <div className="studio-group">
+              <button className="btn ghost sm on-dark" onClick={() => (onCopy(), setOpen(false))}>
+                העתקת קישור
+              </button>
+              <a className="btn ghost sm on-dark" href={DEV_CHAT_URL} target="_blank" rel="noopener noreferrer">
+                שיחת הפיתוח
+              </a>
+              <a className="btn ghost sm on-dark" href={RESEARCH_URL} target="_blank" rel="noopener noreferrer">
+                פרויקט המחקר
+              </a>
+              {install && (
+                <button className="btn solid-light sm" onClick={() => (setOpen(false), onInstall())}>
+                  התקנת האפליקציה
+                </button>
+              )}
+            </div>
+            <span className="label on-dark studio-sep">עריכה</span>
             {canEdit ? (
               <>
                 <button

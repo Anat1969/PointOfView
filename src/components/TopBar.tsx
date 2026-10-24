@@ -1,11 +1,8 @@
-import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { toast } from '../lib/feedback';
 import { StudioMenu } from './StudioMenu';
 import type { Route } from '../lib/router';
 
-export const DEV_CHAT_URL = 'https://claude.ai/code/session_019kTroUQMhUxN3z5tZbgygY';
-export const RESEARCH_URL = 'https://claude.ai/chat/318dc51b-64aa-4109-ba88-fde716894cce';
 
 type BIPEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
 
@@ -67,7 +64,7 @@ export function TopBar({ route }: { route: Route }) {
           <span className="brand-name">Faces</span>
         </a>
 
-        <StudioMenu />
+        <StudioMenu install={!!install} onInstall={doInstall} onCopy={copyLink} />
 
         <button
           className="menu-toggle btn ghost sm"
@@ -85,30 +82,6 @@ export function TopBar({ route }: { route: Route }) {
                 {n.label}
               </a>
             ))}
-          </div>
-          <div className="topnav-actions">
-            <button className="btn ghost sm" onClick={copyLink}>
-              העתקת קישור
-            </button>
-            <a className="btn ghost sm" href={DEV_CHAT_URL} target="_blank" rel="noopener noreferrer">
-              שיחת הפיתוח
-            </a>
-            <a className="btn ghost sm" href={RESEARCH_URL} target="_blank" rel="noopener noreferrer">
-              פרויקט המחקר
-            </a>
-            <AnimatePresence>
-              {install && (
-                <motion.button
-                  className="btn solid sm"
-                  onClick={doInstall}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                >
-                  התקנת האפליקציה
-                </motion.button>
-              )}
-            </AnimatePresence>
           </div>
         </nav>
       </div>

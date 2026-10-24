@@ -69,9 +69,13 @@ ok(await page.getByText('60 מתוך 99 פנים').isVisible(), 'home: library c
 await page.waitForTimeout(800);
 await page.screenshot({ path: join(OUT, '01-home.png') });
 ok((await page.locator('a.brand').getAttribute('href')) === '#/', 'brand links home');
-ok((await page.getByRole('link', { name: 'שיחת הפיתוח' }).getAttribute('href')).includes('claude.ai/code/session_'), 'dev chat link');
-ok((await page.getByRole('link', { name: 'פרויקט המחקר' }).getAttribute('href')).includes('claude.ai/chat/'), 'research link');
+ok(await page.locator('.topbar').getByText('העתקת קישור').count() === 0, 'top bar: links hidden until the A&I logo opens');
+await page.getByRole('button', { name: /A&I/ }).click();
+await page.screenshot({ path: join(OUT, '01b-studio-menu.png') });
+ok((await page.getByRole('link', { name: 'שיחת הפיתוח' }).getAttribute('href')).includes('claude.ai/code/session_'), 'A&I: dev chat link');
+ok((await page.getByRole('link', { name: 'פרויקט המחקר' }).getAttribute('href')).includes('claude.ai/chat/'), 'A&I: research link');
 await page.getByRole('button', { name: 'העתקת קישור' }).click();
+ok(await page.locator('#studio-panel').waitFor({ state: 'detached', timeout: 3000 }).then(() => true, () => false), 'A&I: menu closes after copy');
 await page.getByText('הקישור הועתק').waitFor();
 ok((await page.evaluate(() => navigator.clipboard.readText())).startsWith(BASE), 'copy link copies current URL');
 
