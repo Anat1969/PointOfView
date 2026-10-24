@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -p . && vite build",
     "preview": "vite preview --port 4173 --strictPort",
-    "test:e2e": "node tests/e2e.mjs"
+    "test:e2e": "node tests/e2e.mjs",
+    "build:github": "tsc -p . && vite build --base=./ --outDir app --emptyOutDir"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",

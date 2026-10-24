@@ -7,6 +7,7 @@
 | דף הכלים | https://faces-pointofview.vercel.app |
 | Faces | https://faces-pointofview.vercel.app/#/faces |
 | משחק האימון | https://faces-pointofview.vercel.app/#/coaching |
+| הגרסה האחרונה ישירות מ-GitHub, בלי Vercel | https://raw.githack.com/Anat1969/PointOfView/main/app/index.html |
 
 סדרת כלים לתהליכי התפתחות ושינוי. דף הבית מציג את הכלים, וכל משחק עומד בפני עצמו: Faces (פנים והשתקפויות) ומשחק האימון (תמונה ומילה, בתהליך מודרך במפת שלוש תחנות או חופשי).
 

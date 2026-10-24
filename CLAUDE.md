@@ -40,6 +40,11 @@
 - צבעים שנושאים משמעות: פנים בגוון אבן (--face), השתקפויות בכחול דיו (--refl). לא להחליף באפור.
 - תמיד עומק, הנפשה ושכבות: טבעת תלת־ממדית בבית, קלפים שמתהפכים בשליפה, גלגל קלפים בתצוגת קבוצה.
 
+## קישור ישיר מ-GitHub (בלי Vercel)
+- https://raw.githack.com/Anat1969/PointOfView/main/app/index.html מציג את מה שמוזג ל-main, גם כש-Vercel חסום (למשל במגבלת 100 פריסות ביום בתוכנית החינמית).
+- התיקייה app/ נבנית אוטומטית בכל מיזוג ל-main (.github/workflows/build-app.yml, `npm run build:github` עם base יחסי). vercel.json מדלג על פריסה כשרק app/ השתנה.
+- בבנייה עם base יחסי ה-service worker לא נרשם, כדי שלא יוגשו קבצים ישנים מהמטמון.
+
 ## בדיקה לפני דחיפה
 1. `npm run build`
 2. `npm run preview` ברקע, ואז `AI_MENU_JS=<עותק מקומי של ai-menu.js> npm run test:e2e` (הסביבה לא מגיעה ל-vercel.app; עותק: git clone https://github.com/Anat1969/appofapp-gh, הקובץ public/ai-menu.js). הבדיקה לוחצת על כל כפתור, בודקת נייד בלי גלילה אופקית ובודקת שאין שגיאות התקנה.

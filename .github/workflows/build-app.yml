@@ -1,0 +1,38 @@
+# בונה את האפליקציה לתיקייה app/ בכל מיזוג ל-main, כדי שיהיה קישור ישיר מהריפו גם בלי Vercel:
+# https://raw.githack.com/Anat1969/PointOfView/main/app/index.html
+name: Build app folder
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['app/**']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-app
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+      - run: npm run build:github
+      - name: Commit app/ if it changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app
+          if git diff --cached --quiet; then echo "app/ unchanged"; exit 0; fi
+          git commit -m "Update app/ build from ${GITHUB_SHA::7}"
+          git push
