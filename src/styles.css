@@ -83,7 +83,6 @@ button, input, textarea { font: inherit; color: inherit; }
 .topnav-links a { text-decoration: none; padding: 8px 14px; border-radius: 999px; font-size: 15px; color: #c9c7c2; transition: color .2s, background .2s; white-space: nowrap; }
 .topnav-links a:hover { color: #fff; background: rgba(255,255,255,.06); }
 .topnav-links a.active { color: #fff; background: rgba(255,255,255,.12); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); }
-.topnav-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; min-width: 0; }
 .topbar .btn.ghost { color: #e6e4df; border-color: rgba(255,255,255,.18); background: rgba(255,255,255,.03); }
 .topbar .btn.ghost:hover { background: rgba(255,255,255,.08); }
 .topbar .btn.solid { background: #f2f1ee; color: var(--ink); }
@@ -99,7 +98,6 @@ button, input, textarea { font: inherit; color: inherit; }
   .topnav.open { display: flex; }
   .topnav-links { flex-direction: column; }
   .topnav-links a { padding: 12px 14px; border-radius: 10px; }
-  .topnav-actions { justify-content: flex-start; }
 }
 
 /* ---------- כפתורים ---------- */
@@ -487,3 +485,11 @@ textarea { resize: vertical; line-height: 1.55; }
     radial-gradient(120% 90% at 30% 10%, #4a78a6 0%, var(--refl) 40%, var(--refl-deep) 100%);
 }
 .card-face.reflection .word { text-shadow: 0 2px 12px rgba(0,0,0,.25); letter-spacing: .01em; }
+
+.studio-group { display: flex; flex-direction: column; gap: 8px; }
+.studio-sep { padding-top: 10px; border-top: 1px solid rgba(255,255,255,.1); }
+.studio-panel a.btn { text-decoration: none; }
+/* כש-Chrome מציע התקנה: נקודה עדינה על הלוגו */
+.studio-btn.can-install .studio-mark { position: relative; }
+.studio-btn.can-install .studio-mark::after { content: ''; position: absolute; top: 1px; inset-inline-end: 1px; width: 10px; height: 10px; border-radius: 50%; background: #8fb3d9; border: 2px solid #1d1e21; }
+.studio-panel { max-height: calc(100dvh - var(--bar-h) - 24px); overflow: auto; }
