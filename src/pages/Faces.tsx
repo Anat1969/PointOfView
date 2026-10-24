@@ -6,7 +6,7 @@ import { confirmAction, toast } from '../lib/feedback';
 import { ACCEPTED, MAX_FILE_MB, prepareImage } from '../lib/images';
 import { addFaceImage, deleteFace, restoreStarterFaces } from '../lib/library';
 import { STARTER_FACE_COUNT } from '../lib/starter';
-import { getState, useStore } from '../lib/store';
+import { getState, selectEditing, useStore } from '../lib/store';
 import type { Face } from '../lib/types';
 import { MAX_FACES } from '../lib/types';
 import { useFaceImages } from '../lib/useImages';
@@ -15,7 +15,7 @@ type UploadError = { file: string; reason: string };
 
 export function Faces() {
   const faces = useStore((s) => s.faces);
-  const canEdit = useStore((s) => s.canEdit && s.sync === 'ready');
+  const canEdit = useStore(selectEditing);
   const urls = useFaceImages();
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(0);

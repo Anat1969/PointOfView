@@ -27,6 +27,14 @@ function editorKey(): string | null {
   }
 }
 
+export function saveEditorKey(k: string) {
+  try {
+    localStorage.setItem(KEY_STORE, k);
+  } catch {
+    /* מצב פרטי */
+  }
+}
+
 export function forgetEditorKey() {
   try {
     localStorage.removeItem(KEY_STORE);

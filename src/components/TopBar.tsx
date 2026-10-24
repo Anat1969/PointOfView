@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { toast } from '../lib/feedback';
+import { StudioMenu } from './StudioMenu';
 import type { Route } from '../lib/router';
 
 export const DEV_CHAT_URL = 'https://claude.ai/code/session_019kTroUQMhUxN3z5tZbgygY';
@@ -65,6 +66,8 @@ export function TopBar({ route }: { route: Route }) {
           </span>
           <span className="brand-name">Faces</span>
         </a>
+
+        <StudioMenu />
 
         <button
           className="menu-toggle btn ghost sm"

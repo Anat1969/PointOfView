@@ -1,8 +1,9 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CardFace } from '../components/CardFace';
 import { go } from '../lib/router';
 import { useStore } from '../lib/store';
+import { toUnits } from '../lib/units';
 import { useFaceImages } from '../lib/useImages';
 
 /** תצוגת קבוצה: גלגל קלפים בעומק, הקלף הנוכחי במרכז */
@@ -10,10 +11,12 @@ export function Present({ id, index }: { id: string; index: number }) {
   const session = useStore((s) => (s.working?.id === id ? s.working : s.sessions.find((x) => x.id === id)));
   const urls = useFaceImages();
   const stage = useRef<HTMLDivElement>(null);
-  const [notes, setNotes] = useState(false);
+  const [showNotes, setNotes] = useState(false);
   const [isFull, setIsFull] = useState(false);
 
-  const count = session?.cards.length ?? 0;
+  // בזוגות: פנים והשתקפות מוצגות יחד כיחידה אחת
+  const units = useMemo(() => (session ? toUnits(session) : []), [session]);
+  const count = units.length;
   const i = Math.min(index, Math.max(0, count - 1));
 
   const to = useCallback((n: number) => go(`/present/${id}/${Math.max(0, Math.min(count - 1, n))}`, true), [id, count]);
@@ -63,7 +66,8 @@ export function Present({ id, index }: { id: string; index: number }) {
     );
   }
 
-  const card = session.cards[i];
+  const unit = units[i];
+  const notes = unit.cards.map((c) => c.note).filter(Boolean).join('\n');
 
   return (
     <div className="present" ref={stage}>
@@ -73,8 +77,8 @@ export function Present({ id, index }: { id: string; index: number }) {
           {String(i + 1).padStart(2, '0')} / {String(count).padStart(2, '0')}
         </span>
         <div className="row">
-          <button className="btn ghost sm on-dark" onClick={() => setNotes((v) => !v)} aria-pressed={notes}>
-            {notes ? 'הסתרת הערות' : 'הצגת הערות'}
+          <button className="btn ghost sm on-dark" onClick={() => setNotes((v) => !v)} aria-pressed={showNotes}>
+            {showNotes ? 'הסתרת הערות' : 'הצגת הערות'}
           </button>
           <button className="btn ghost sm on-dark" onClick={toggleFull}>
             {isFull ? 'יציאה ממסך מלא' : 'מסך מלא'}
@@ -86,20 +90,20 @@ export function Present({ id, index }: { id: string; index: number }) {
       </div>
 
       <div className="carousel" role="region" aria-roledescription="קרוסלה" aria-label="קלפי הסשן">
-        {session.cards.map((c, k) => {
+        {units.map((u, k) => {
           const d = k - i;
           if (Math.abs(d) > 4) return null;
           return (
             <motion.button
-              key={c.id}
-              className={`carousel-card ${d === 0 ? 'current' : ''}`}
+              key={u.key}
+              className={`carousel-card ${u.cards.length > 1 ? 'is-pair' : ''} ${d === 0 ? 'current' : ''}`}
               onClick={() => to(k)}
               tabIndex={d === 0 ? -1 : 0}
               aria-label={`קלף ${k + 1}`}
               aria-current={d === 0}
               initial={false}
               animate={{
-                x: `${-d * 58}%`,
+                x: `${-d * (u.cards.length > 1 ? 34 : 58)}%`,
                 z: -Math.abs(d) * 260,
                 rotateY: d === 0 ? 0 : d > 0 ? 38 : -38,
                 opacity: Math.abs(d) > 3 ? 0 : 1 - Math.abs(d) * 0.18,
@@ -108,16 +112,18 @@ export function Present({ id, index }: { id: string; index: number }) {
               transition={{ type: 'spring', stiffness: 140, damping: 22 }}
               style={{ zIndex: 50 - Math.abs(d) }}
             >
-              <CardFace card={c} url={c.kind === 'face' ? urls.get(c.refId) : undefined} big />
+              {u.cards.map((c) => (
+                <CardFace key={c.id} card={c} url={c.kind === 'face' ? urls.get(c.refId) : undefined} big />
+              ))}
             </motion.button>
           );
         })}
       </div>
 
       <AnimatePresence mode="wait">
-        {notes && card.note && (
-          <motion.p key={card.id} className="present-note" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-            {card.note}
+        {notes && showNotes && (
+          <motion.p key={unit.key} className="present-note" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+            {notes}
           </motion.p>
         )}
       </AnimatePresence>
@@ -127,8 +133,8 @@ export function Present({ id, index }: { id: string; index: number }) {
           הקודם
         </button>
         <div className="dots" aria-hidden="true">
-          {session.cards.map((c, k) => (
-            <span key={c.id} className={`${k === i ? 'on' : ''} dot-${c.kind}`} />
+          {units.map((u, k) => (
+            <span key={u.key} className={`${k === i ? 'on' : ''} dot-${u.cards[0].kind}`} />
           ))}
         </div>
         <button className="btn ghost on-dark" onClick={() => to(i + 1)} disabled={i === count - 1}>

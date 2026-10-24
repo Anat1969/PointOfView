@@ -1,14 +1,60 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useMemo } from 'react';
-import { Deck } from '../components/Deck';
+import { useEffect, useMemo, useState } from 'react';
+import { CardFace } from '../components/CardFace';
 import { FlipCard } from '../components/SessionCardView';
 import { drawCard, isBlank, reflectionDeck } from '../lib/deck';
 import { confirmAction, toast } from '../lib/feedback';
+import { uid } from '../lib/id';
 import { go } from '../lib/router';
 import { getState, setState, useStore } from '../lib/store';
-import type { Session, SessionCard } from '../lib/types';
+import type { GameForm, Session, SessionCard } from '../lib/types';
+import { fitGrid, formOf, toUnits } from '../lib/units';
 import { useFaceImages } from '../lib/useImages';
 import { newSession } from './Home';
+
+const FORMS: { id: GameForm; label: string }[] = [
+  { id: 'pairs', label: 'זוגות' },
+  { id: 'faces', label: 'פנים' },
+  { id: 'free', label: 'חופשי' },
+];
+
+const INNER = 8;
+
+/** גודל השטח הפנוי של השולחן, מתעדכן עם שינוי החלון */
+function useBox<T extends HTMLElement>() {
+  // ref כפונקציה: השולחן נוצר רק אחרי שהסשן נטען, ואז מתחילה המדידה
+  const [el, ref] = useState<T | null>(null);
+  const [box, setBox] = useState({ w: 0, h: 0 });
+  useEffect(() => {
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => setBox({ w: e.contentRect.width, h: e.contentRect.height }));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [el]);
+  return [ref, box] as const;
+}
+
+function MiniDeck({ kind, label, left, onDraw }: { kind: 'face' | 'reflection' | 'pair'; label: string; left: number; onDraw: () => void }) {
+  const empty = left <= 0;
+  return (
+    <motion.button
+      className={`mini-deck mini-${kind}`}
+      onClick={onDraw}
+      disabled={empty}
+      whileHover={empty ? undefined : { rotateX: 10, y: -4 }}
+      whileTap={empty ? undefined : { scale: 0.95, rotateX: 20 }}
+      aria-label={`${label}, נותרו ${left}`}
+    >
+      {[3, 2, 1].map((i) => (
+        <span key={i} className="mini-layer" style={{ transform: `translateZ(${-i * 4}px) translateY(${i * 3}px)` }} />
+      ))}
+      <span className="mini-top">
+        <span className="mini-title">{label}</span>
+        <span className="mono">{empty ? 'החפיסה נגמרה' : `נותרו ${left}`}</span>
+      </span>
+    </motion.button>
+  );
+}
 
 export function SessionPage({ id }: { id: string }) {
   const working = useStore((s) => s.working);
@@ -16,21 +62,34 @@ export function SessionPage({ id }: { id: string }) {
   const faces = useStore((s) => s.faces);
   const refl = useStore((s) => s.reflections);
   const urls = useFaceImages();
+  const [selected, setSelected] = useState<string | null>(null);
+  const [details, setDetails] = useState(false);
+  const [boardRef, box] = useBox<HTMLDivElement>();
 
-  // פתיחת סשן שמור לעריכה
   useEffect(() => {
     if (working?.id !== id && saved) setState({ working: structuredClone(saved) });
   }, [id, saved, working?.id]);
 
   const s = working?.id === id ? working : null;
   const dirty = useMemo(() => !s || !saved || JSON.stringify(s) !== JSON.stringify(saved), [s, saved]);
+  const units = useMemo(() => (s ? toUnits(s) : []), [s]);
+  const form = s ? formOf(s) : 'pairs';
+  const perUnit = form === 'pairs' ? 2 : 1;
+  const GAP = box.w < 520 ? 10 : 18;
+  const fit = fitGrid(units.length, perUnit, box.w, box.h, GAP, INNER);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && (setSelected(null), setDetails(false));
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   if (!s) {
     return (
       <div className="page">
         <div className="empty">
           <h2>הסשן לא נמצא</h2>
-          <p>ייתכן שנמחק, או שנפתח במכשיר אחר. הנתונים נשמרים במכשיר שבו נוצרו.</p>
+          <p>ייתכן שנמחק, או שנפתח במכשיר אחר. הסשנים נשמרים במכשיר שבו נוצרו.</p>
           <div className="row center">
             <button className="btn solid" onClick={newSession}>
               סשן חדש
@@ -48,16 +107,17 @@ export function SessionPage({ id }: { id: string }) {
   const updateCard = (cid: string, patch: Partial<SessionCard>) =>
     update({ cards: s.cards.map((c) => (c.id === cid ? { ...c, ...patch } : c)) });
 
-  const usedFaces = s.cards.filter((c) => c.kind === 'face').length;
-  const usedRefl = s.cards.filter((c) => c.kind === 'reflection').length;
-  const reflTotal = reflectionDeck(refl).length;
+  const facesLeft = faces.length - s.cards.filter((c) => c.kind === 'face').length;
+  const reflLeft = reflectionDeck(refl).length - s.cards.filter((c) => c.kind === 'reflection').length;
 
   const draw = (kinds: SessionCard['kind'][]) => {
     const added: SessionCard[] = [];
     const temp = { ...s, cards: [...s.cards] };
+    const pair = kinds.length > 1 ? uid() : undefined;
     for (const k of kinds) {
       const c = drawCard(temp, k);
       if (c) {
+        if (pair) c.pair = pair;
         added.push(c);
         temp.cards.push(c);
       }
@@ -69,15 +129,18 @@ export function SessionPage({ id }: { id: string }) {
   const replace = (c: SessionCard) => {
     const next = drawCard(s, c.kind, [c.refId]);
     if (!next) return toast('אין קלף אחר פנוי להחלפה', 'error');
-    update({ cards: s.cards.map((x) => (x.id === c.id ? { ...next, id: c.id, note: c.note } : x)) });
+    update({ cards: s.cards.map((x) => (x.id === c.id ? { ...next, id: c.id, pair: c.pair, note: c.note } : x)) });
   };
 
-  const removeCard = (c: SessionCard, i: number) =>
+  const removeCard = (c: SessionCard) =>
     confirmAction({
-      title: `להסיר את קלף ${i + 1}?`,
+      title: 'להסיר את הקלף מהשולחן?',
       body: c.note ? 'גם ההערה שנכתבה לקלף תימחק.' : undefined,
       action: 'הסרה',
-      onConfirm: () => update({ cards: s.cards.filter((x) => x.id !== c.id) }),
+      onConfirm: () => {
+        setSelected(null);
+        update({ cards: s.cards.filter((x) => x.id !== c.id) });
+      },
     });
 
   const save = () => {
@@ -93,6 +156,7 @@ export function SessionPage({ id }: { id: string }) {
       body: saved ? 'הסשן יחזור לגרסה השמורה האחרונה.' : 'הטיוטה לא נשמרה בהיסטוריה ותימחק.',
       action: saved ? 'ביטול שינויים' : 'מחיקת טיוטה',
       onConfirm: () => {
+        setDetails(false);
         if (saved) setState({ working: structuredClone(saved) });
         else {
           setState({ working: null });
@@ -101,133 +165,152 @@ export function SessionPage({ id }: { id: string }) {
       },
     });
 
+  const sel = s.cards.find((c) => c.id === selected) ?? null;
+  const selIndex = sel ? s.cards.indexOf(sel) : -1;
+  let order = 0;
+
   return (
-    <div className="page session">
-      <header className="session-head">
-        <div className="session-title">
-          <span className="label">
-            סשן / {s.mode === 'group' ? 'קבוצתי' : 'אישי'} / {saved ? (dirty ? 'יש שינויים שלא נשמרו' : 'שמור') : 'טיוטה'}
-          </span>
-          <input className="title-input" aria-label="שם הסשן" value={s.title} onChange={(e) => update({ title: e.target.value })} />
+    <div className="session-stage">
+      <header className="stage-bar">
+        <input className="stage-title" aria-label="שם הסשן" value={s.title} onChange={(e) => update({ title: e.target.value })} />
+        <div className="segmented" role="radiogroup" aria-label="צורת המשחק">
+          {FORMS.map((f) => (
+            <button key={f.id} role="radio" aria-checked={form === f.id} className={form === f.id ? 'on' : ''} onClick={() => update({ form: f.id })}>
+              {f.label}
+              {form === f.id && <motion.span layoutId="form-seg" className="seg-bg" />}
+            </button>
+          ))}
         </div>
-        <div className="session-meta">
-          <div className="segmented" role="radiogroup" aria-label="סוג הסשן">
-            {(['personal', 'group'] as const).map((m) => (
-              <button key={m} role="radio" aria-checked={s.mode === m} className={s.mode === m ? 'on' : ''} onClick={() => update({ mode: m })}>
-                {m === 'personal' ? 'אישי' : 'קבוצתי'}
-                {s.mode === m && <motion.span layoutId="seg" className="seg-bg" />}
-              </button>
-            ))}
-          </div>
-          <input
-            className="participants"
-            aria-label={s.mode === 'group' ? 'משתתפים' : 'שם המשתתף'}
-            placeholder={s.mode === 'group' ? 'משתתפים' : 'שם המשתתף'}
-            value={s.participants}
-            onChange={(e) => update({ participants: e.target.value })}
-          />
-        </div>
-        <div className="session-actions">
-          <button className="btn solid" onClick={save} disabled={!dirty}>
-            {dirty ? 'שמירה' : 'נשמר'}
+        <span className="mono stage-count">
+          {units.length} {form === 'pairs' ? 'זוגות' : 'קלפים'} · {saved ? (dirty ? 'לא נשמר' : 'שמור') : 'טיוטה'}
+        </span>
+        <div className="stage-actions">
+          <button className="btn ghost sm" onClick={() => (setDetails(true), setSelected(null))}>
+            פרטים וסיכום
           </button>
-          <button className="btn ghost" onClick={() => go(`/present/${s.id}`)} disabled={!s.cards.length}>
+          <button className="btn ghost sm" onClick={() => go(`/present/${s.id}`)} disabled={!s.cards.length}>
             תצוגת קבוצה
           </button>
-          {(dirty || !saved) && (
-            <button className="btn ghost" onClick={discard}>
-              {saved ? 'ביטול שינויים' : 'מחיקת טיוטה'}
-            </button>
-          )}
+          <button className="btn solid sm" onClick={save} disabled={!dirty}>
+            {dirty ? 'שמירה' : 'נשמר'}
+          </button>
         </div>
       </header>
 
-      <section className="decks">
-        <Deck
-          kind="face"
-          label="שליפת פנים"
-          remaining={faces.length - usedFaces}
-          total={faces.length}
-          onDraw={() => draw(['face'])}
-          disabledText={faces.length ? 'כל הפנים נשלפו' : undefined}
-        />
-        <motion.button className="btn pair" onClick={() => draw(['face', 'reflection'])} whileTap={{ scale: 0.95 }} disabled={faces.length - usedFaces === 0 && reflTotal - usedRefl === 0}>
-          שליפת זוג
-        </motion.button>
-        <Deck
-          kind="reflection"
-          label="שליפת השתקפות"
-          remaining={reflTotal - usedRefl}
-          total={reflTotal}
-          onDraw={() => draw(['reflection'])}
-          disabledText={reflTotal ? 'כל ההשתקפויות נשלפו' : undefined}
-        />
-      </section>
-      {(!faces.length || !reflTotal) && (
-        <p className="empty-hint">
-          {!faces.length && (
-            <>
-              ספריית הפנים ריקה. <a href="#/faces">להעלאת תמונות</a>.{' '}
-            </>
+      <div className="stage-body">
+        <aside className="deck-rail" aria-label="חפיסות">
+          {form === 'pairs' && <MiniDeck kind="pair" label="שליפת זוג" left={Math.min(facesLeft, reflLeft)} onDraw={() => draw(['face', 'reflection'])} />}
+          {form !== 'pairs' && <MiniDeck kind="face" label="שליפת פנים" left={facesLeft} onDraw={() => draw(['face'])} />}
+          {form === 'free' && <MiniDeck kind="reflection" label="שליפת השתקפות" left={reflLeft} onDraw={() => draw(['reflection'])} />}
+          {(!faces.length || (form !== 'faces' && !reflLeft && !s.cards.some((c) => c.kind === 'reflection'))) && (
+            <p className="rail-hint">הספרייה עוד נטענת, או שהיא ריקה.</p>
           )}
-          {!reflTotal && (
-            <>
-              אין השתקפויות. <a href="#/reflections">להזנת מילים</a>.
-            </>
-          )}
-        </p>
-      )}
+        </aside>
 
-      {s.cards.length === 0 ? (
-        <div className="empty table-empty">
-          <h2>השולחן ריק</h2>
-          <p>הצעד הבא: ללחוץ על אחת החפיסות. כל קלף שנשלף מקבל מקום להערה.</p>
+        <div className="board" ref={boardRef}>
+          {units.length === 0 ? (
+            <div className="board-empty">
+              <h2>השולחן ריק</h2>
+              <p>{form === 'pairs' ? 'כל שליפה מניחה זוג: פנים והשתקפות.' : form === 'faces' ? 'כל שליפה מניחה פנים אחת.' : 'שולפים פנים והשתקפויות לפי הצורך.'}</p>
+            </div>
+          ) : (
+            <motion.ol
+              className="board-grid"
+              layout
+              style={{ gridTemplateColumns: `repeat(${fit.cols}, auto)`, gap: GAP, ['--card-w' as string]: `${fit.cardW}px` }}
+            >
+              <AnimatePresence>
+                {units.map((u) => (
+                  <motion.li key={u.key} layout className={`unit ${u.cards.length > 1 ? 'unit-pair' : ''}`} exit={{ opacity: 0, scale: 0.8, rotateX: -50 }}>
+                    {u.cards.map((c) => {
+                      const i = order++;
+                      return (
+                        <button
+                          key={c.id}
+                          className={`table-card ${selected === c.id ? 'selected' : ''}`}
+                          onClick={() => (setSelected(c.id), setDetails(false))}
+                          aria-label={`קלף ${i + 1}, ${c.kind === 'face' ? 'פנים' : isBlank(c) ? 'קלף ריק' : c.text}. פתיחת הערה`}
+                        >
+                          <FlipCard key={c.refId} card={c} url={c.kind === 'face' ? urls.get(c.refId) : undefined} index={i} />
+                        </button>
+                      );
+                    })}
+                  </motion.li>
+                ))}
+              </AnimatePresence>
+            </motion.ol>
+          )}
         </div>
-      ) : (
-        <motion.ol className="table" layout>
-          <AnimatePresence>
-            {s.cards.map((c, i) => (
-              <motion.li
-                key={c.id}
-                layout
-                className={`slot slot-${c.kind}`}
-                exit={{ opacity: 0, rotateX: -70, y: 40, transition: { duration: 0.25 } }}
-              >
-                <FlipCard key={c.refId} card={c} url={c.kind === 'face' ? urls.get(c.refId) : undefined} index={i} />
-                <div className="slot-body">
-                  <div className="slot-head">
-                    <span className="mono">
-                      {String(i + 1).padStart(2, '0')} · {c.kind === 'face' ? 'פנים' : isBlank(c) ? 'קלף ריק' : 'השתקפות'}
-                    </span>
-                    <div className="row">
-                      <button className="btn ghost xs" onClick={() => replace(c)}>
-                        החלפה
-                      </button>
-                      <button className="btn ghost xs" onClick={() => removeCard(c, i)}>
-                        הסרה
-                      </button>
-                    </div>
+
+        <AnimatePresence>
+          {(sel || details) && (
+            <motion.aside
+              className="drawer"
+              initial={{ opacity: 0, x: -40, rotateY: 12 }}
+              animate={{ opacity: 1, x: 0, rotateY: 0 }}
+              exit={{ opacity: 0, x: -30 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 28 }}
+              aria-label={sel ? 'הערה לקלף' : 'פרטי הסשן'}
+            >
+              <div className="drawer-head">
+                <span className="label">{sel ? `קלף ${selIndex + 1} · ${sel.kind === 'face' ? 'פנים' : isBlank(sel) ? 'קלף ריק' : 'השתקפות'}` : 'פרטי הסשן'}</span>
+                <button className="btn ghost xs" onClick={() => (setSelected(null), setDetails(false))}>
+                  סגירה
+                </button>
+              </div>
+              {sel ? (
+                <>
+                  <div className="drawer-card">
+                    <CardFace card={sel} url={sel.kind === 'face' ? urls.get(sel.refId) : undefined} />
                   </div>
                   <textarea
-                    aria-label={`הערה לקלף ${i + 1}`}
-                    placeholder={isBlank(c) ? 'המילה שנבחרה, ומה עלה ממנה' : 'מה עלה מהקלף'}
-                    value={c.note}
-                    onChange={(e) => updateCard(c.id, { note: e.target.value })}
-                    rows={3}
+                    aria-label={`הערה לקלף ${selIndex + 1}`}
+                    placeholder={isBlank(sel) ? 'המילה שנבחרה, ומה עלה ממנה' : 'מה עלה מהקלף'}
+                    value={sel.note}
+                    onChange={(e) => updateCard(sel.id, { note: e.target.value })}
+                    rows={5}
+                    autoFocus
                   />
-                </div>
-              </motion.li>
-            ))}
-          </AnimatePresence>
-        </motion.ol>
-      )}
-
-      <section className="summary">
-        <label htmlFor="summary" className="label">
-          סיכום הסשן
-        </label>
-        <textarea id="summary" rows={4} placeholder="תובנה מרכזית, צעד הבא" value={s.summary} onChange={(e) => update({ summary: e.target.value })} />
-      </section>
+                  <div className="row wrap">
+                    <button className="btn ghost sm" onClick={() => replace(sel)}>
+                      החלפה
+                    </button>
+                    <button className="btn ghost sm danger-text" onClick={() => removeCard(sel)}>
+                      הסרה
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="segmented" role="radiogroup" aria-label="סוג הסשן">
+                    {(['personal', 'group'] as const).map((m) => (
+                      <button key={m} role="radio" aria-checked={s.mode === m} className={s.mode === m ? 'on' : ''} onClick={() => update({ mode: m })}>
+                        {m === 'personal' ? 'אישי' : 'קבוצתי'}
+                        {s.mode === m && <motion.span layoutId="mode-seg" className="seg-bg" />}
+                      </button>
+                    ))}
+                  </div>
+                  <input
+                    aria-label={s.mode === 'group' ? 'משתתפים' : 'שם המשתתף'}
+                    placeholder={s.mode === 'group' ? 'משתתפים' : 'שם המשתתף'}
+                    value={s.participants}
+                    onChange={(e) => update({ participants: e.target.value })}
+                  />
+                  <label htmlFor="summary" className="label">
+                    סיכום הסשן
+                  </label>
+                  <textarea id="summary" rows={6} placeholder="תובנה מרכזית, צעד הבא" value={s.summary} onChange={(e) => update({ summary: e.target.value })} />
+                  {(dirty || !saved) && (
+                    <button className="btn ghost sm danger-text" onClick={discard}>
+                      {saved ? 'ביטול שינויים' : 'מחיקת טיוטה'}
+                    </button>
+                  )}
+                </>
+              )}
+            </motion.aside>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
