@@ -2,15 +2,12 @@ import { useEffect, useState } from 'react';
 import { toast } from '../lib/feedback';
 import { StudioMenu } from './StudioMenu';
 import type { Route } from '../lib/router';
+import { GAMES, GAME_IDS } from '../lib/games';
 
 
 type BIPEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
 
-const NAV = [
-  { href: '#/faces', label: 'ספריית פנים', page: 'faces' },
-  { href: '#/reflections', label: 'השתקפויות', page: 'reflections' },
-  { href: '#/history', label: 'היסטוריה', page: 'history' },
-] as const;
+
 
 export function TopBar({ route }: { route: Route }) {
   const [install, setInstall] = useState<BIPEvent | null>(null);
@@ -51,17 +48,25 @@ export function TopBar({ route }: { route: Route }) {
     setInstall(null);
   };
 
-  const activePage = route.page === 'present' ? 'session' : route.page;
+  // בתוך משחק: הניווט של המשחק. בדף הכלים: רשימת הכלים
+  const nav =
+    route.page === 'suite'
+      ? GAME_IDS.map((g) => ({ href: `#/${g}`, label: GAMES[g].name, active: false }))
+      : [
+          { href: `#/${route.game}`, label: GAMES[route.game].name, active: route.page === 'home' || route.page === 'session' || route.page === 'present' },
+          ...GAMES[route.game].libraries.map((l) => ({ href: `#/${route.game}/${l.path}`, label: l.label, active: route.page === l.path })),
+          { href: `#/${route.game}/history`, label: 'היסטוריה', active: route.page === 'history' },
+        ];
 
   return (
     <header className="topbar">
       <div className="topbar-inner">
-        <a href="#/" className="brand" aria-label="Faces, דף הבית">
+        <a href="#/" className="brand" aria-label="Point of View, דף הכלים">
           <span className="brand-mark" aria-hidden="true">
             <i />
             <i />
           </span>
-          <span className="brand-name">Faces</span>
+          <span className="brand-name">Point of View</span>
         </a>
 
         <StudioMenu install={!!install} onInstall={doInstall} onCopy={copyLink} />
@@ -77,8 +82,8 @@ export function TopBar({ route }: { route: Route }) {
 
         <nav id="topnav" className={`topnav ${open ? 'open' : ''}`} aria-label="ניווט ראשי">
           <div className="topnav-links">
-            {NAV.map((n) => (
-              <a key={n.page} href={n.href} className={activePage === n.page ? 'active' : ''} aria-current={activePage === n.page ? 'page' : undefined}>
+            {nav.map((n) => (
+              <a key={n.href} href={n.href} className={n.active ? 'active' : ''} aria-current={n.active ? 'page' : undefined}>
                 {n.label}
               </a>
             ))}

@@ -1,11 +1,15 @@
+import { GAMES, gameOf } from './games';
 import type { GameForm, Session, SessionCard } from './types';
 
 /** יחידה על השולחן: קלף בודד, או זוג פנים והשתקפות */
-export type Unit = { key: string; cards: SessionCard[] };
+export type Unit = { key: string; cards: SessionCard[]; stage?: number };
 
-export const formOf = (s: Session): GameForm => s.form ?? 'pairs';
+export const formOf = (s: Session): GameForm => s.form ?? GAMES[gameOf(s)].defaultForm;
 
 export function toUnits(s: Session): Unit[] {
+  // ארבעה שלבים: כל שלב הוא נתיב, והקלפים שלו בתוכו
+  if (formOf(s) === 'stages')
+    return [0, 1, 2, 3].map((st) => ({ key: `stage-${st}`, stage: st, cards: s.cards.filter((c) => (c.stage ?? 0) === st) }));
   if (formOf(s) !== 'pairs') return s.cards.map((c) => ({ key: c.id, cards: [c] }));
   const units: Unit[] = [];
   const byPair = new Map<string, Unit>();

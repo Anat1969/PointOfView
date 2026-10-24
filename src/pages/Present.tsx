@@ -4,10 +4,12 @@ import { CardFace } from '../components/CardFace';
 import { go } from '../lib/router';
 import { useStore } from '../lib/store';
 import { toUnits } from '../lib/units';
+import { STAGES } from '../lib/coach';
+import type { GameId } from '../lib/types';
 import { useFaceImages } from '../lib/useImages';
 
 /** תצוגת קבוצה: גלגל קלפים בעומק, הקלף הנוכחי במרכז */
-export function Present({ id, index }: { id: string; index: number }) {
+export function Present({ id, index, game }: { id: string; index: number; game: GameId }) {
   const session = useStore((s) => (s.working?.id === id ? s.working : s.sessions.find((x) => x.id === id)));
   const urls = useFaceImages();
   const stage = useRef<HTMLDivElement>(null);
@@ -15,11 +17,12 @@ export function Present({ id, index }: { id: string; index: number }) {
   const [isFull, setIsFull] = useState(false);
 
   // בזוגות: פנים והשתקפות מוצגות יחד כיחידה אחת
-  const units = useMemo(() => (session ? toUnits(session) : []), [session]);
+  // בארבעה שלבים מוצגים רק שלבים שיש בהם קלפים
+  const units = useMemo(() => (session ? toUnits(session).filter((u) => u.cards.length) : []), [session]);
   const count = units.length;
   const i = Math.min(index, Math.max(0, count - 1));
 
-  const to = useCallback((n: number) => go(`/present/${id}/${Math.max(0, Math.min(count - 1, n))}`, true), [id, count]);
+  const to = useCallback((n: number) => go(`/${game}/present/${id}/${Math.max(0, Math.min(count - 1, n))}`, true), [id, count]);
 
   const toggleFull = useCallback(() => {
     if (document.fullscreenElement) document.exitFullscreen();
@@ -46,7 +49,7 @@ export function Present({ id, index }: { id: string; index: number }) {
       else if (e.key === 'End') to(count - 1);
       else if (e.key === 'f' || e.key === 'כ') toggleFull();
       else if (e.key === 'n' || e.key === 'מ') setNotes((v) => !v);
-      else if (e.key === 'Escape' && !document.fullscreenElement) go(`/session/${id}`);
+      else if (e.key === 'Escape' && !document.fullscreenElement) go(`/${game}/session/${id}`);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -58,7 +61,7 @@ export function Present({ id, index }: { id: string; index: number }) {
         <div className="empty">
           <h2>אין קלפים להצגה</h2>
           <p>הצעד הבא: לשלוף קלפים בסשן, ואז לחזור לתצוגת הקבוצה.</p>
-          <a className="btn solid" href={session ? `#/session/${id}` : '#/'}>
+          <a className="btn solid" href={session ? `#/${game}/session/${id}` : `#/${game}`}>
             {session ? 'חזרה לסשן' : 'לדף הבית'}
           </a>
         </div>
@@ -83,7 +86,7 @@ export function Present({ id, index }: { id: string; index: number }) {
           <button className="btn ghost sm on-dark" onClick={toggleFull}>
             {isFull ? 'יציאה ממסך מלא' : 'מסך מלא'}
           </button>
-          <a className="btn ghost sm on-dark" href={`#/session/${id}`}>
+          <a className="btn ghost sm on-dark" href={`#/${game}/session/${id}`}>
             חזרה לסשן
           </a>
         </div>
@@ -96,7 +99,7 @@ export function Present({ id, index }: { id: string; index: number }) {
           return (
             <motion.button
               key={u.key}
-              className={`carousel-card ${u.cards.length > 1 ? 'is-pair' : ''} ${d === 0 ? 'current' : ''}`}
+              className={`carousel-card ${u.cards.length > 1 ? `is-pair n${Math.min(u.cards.length, 4)}` : ''} ${d === 0 ? 'current' : ''}`}
               onClick={() => to(k)}
               tabIndex={d === 0 ? -1 : 0}
               aria-label={`קלף ${k + 1}`}
@@ -113,8 +116,9 @@ export function Present({ id, index }: { id: string; index: number }) {
               style={{ zIndex: 50 - Math.abs(d) }}
             >
               {u.cards.map((c) => (
-                <CardFace key={c.id} card={c} url={c.kind === 'face' ? urls.get(c.refId) : undefined} big />
+                <CardFace key={c.id} card={c} url={c.kind === 'reflection' ? undefined : urls.get(c.refId)} big />
               ))}
+              {u.stage !== undefined && <span className="stage-chip">{STAGES[u.stage].name}</span>}
             </motion.button>
           );
         })}

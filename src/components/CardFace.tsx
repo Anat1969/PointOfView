@@ -13,6 +13,14 @@ export function CardFace({ card, url, big = false }: { card: SessionCard; url?: 
       </div>
     );
   }
+  if (card.kind === 'coach') {
+    return (
+      <div className={`card-face coach ${big ? 'big' : ''}`}>
+        {url ? <img src={url} alt="" draggable={false} /> : <div className="missing">התמונה נמחקה מהספרייה</div>}
+        <span className="coach-word">{card.text}</span>
+      </div>
+    );
+  }
   const blank = isBlank(card);
   return (
     <div className={`card-face reflection ${blank ? 'blank' : ''} ${big ? 'big' : ''}`}>

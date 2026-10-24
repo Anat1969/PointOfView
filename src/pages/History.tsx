@@ -5,17 +5,20 @@ import { confirmAction, toast } from '../lib/feedback';
 import { uid } from '../lib/id';
 import { go } from '../lib/router';
 import { getState, setState, useStore } from '../lib/store';
-import type { Session } from '../lib/types';
+import type { GameId, Session } from '../lib/types';
+import { GAMES, gameOf } from '../lib/games';
+import { useMemo } from 'react';
 import { useFaceImages } from '../lib/useImages';
 import { newSession } from './Home';
 
-export function History() {
-  const sessions = useStore((s) => s.sessions);
+export function History({ game }: { game: GameId }) {
+  const all = useStore((s) => s.sessions);
+  const sessions = useMemo(() => all.filter((x) => gameOf(x) === game), [all, game]);
   const urls = useFaceImages();
 
   const open = (s: Session) => {
     setState({ working: structuredClone(s) });
-    go(`/session/${s.id}`);
+    go(`/${game}/session/${s.id}`);
   };
 
   const duplicate = (s: Session) => {
@@ -50,7 +53,7 @@ export function History() {
   return (
     <div className="page">
       <header className="page-head">
-        <span className="label">ארכיון / סשנים</span>
+        <span className="label">{GAMES[game].name} / ארכיון</span>
         <h1>היסטוריית סשנים</h1>
         <p className="mono">{sessions.length} סשנים שמורים</p>
         {sessions.length > 0 && (
@@ -69,7 +72,7 @@ export function History() {
         <div className="empty">
           <h2>עוד אין סשנים שמורים</h2>
           <p>הצעד הבא: לפתוח סשן, לשלוף קלפים וללחוץ "שמירה". הסשן יופיע כאן.</p>
-          <button className="btn solid" onClick={newSession}>
+          <button className="btn solid" onClick={() => newSession(game)}>
             סשן חדש
           </button>
         </div>
@@ -77,7 +80,7 @@ export function History() {
         <motion.ul className="history" layout>
           <AnimatePresence>
             {sessions.map((s, i) => {
-              const faceCards = s.cards.filter((c) => c.kind === 'face').slice(0, 5);
+              const faceCards = s.cards.filter((c) => c.kind !== 'reflection').slice(0, 5);
               return (
                 <motion.li
                   key={s.id}

@@ -62,7 +62,16 @@ writeFileSync(bad, 'not an image');
 const fakeJpg = join(FIX, 'broken.jpg');
 writeFileSync(fakeJpg, 'broken');
 
-// ---------- דף הבית, צפייה בלבד ----------
+// ---------- דף הכלים ----------
+await page.waitForSelector('.game-box');
+ok(await count(page, '.game-box') === 2, 'suite: two tools (Faces, coaching game)');
+await page.locator('.fan-card img').first().waitFor();
+await page.waitForTimeout(900);
+await page.screenshot({ path: join(OUT, '00-suite.png') });
+await page.getByRole('button', { name: 'כניסה לFaces' }).click();
+ok(page.url().endsWith('#/faces'), 'suite: Faces box opens the Faces game');
+
+// ---------- דף הבית של Faces, צפייה בלבד ----------
 await page.waitForSelector('.ring-card img');
 ok(await count(page, '.ring-card img') >= 12, 'home: 3D ring shows starter portraits');
 ok(await page.getByText('60 מתוך 99 פנים').isVisible(), 'home: library counts from Supabase');
@@ -106,9 +115,12 @@ const fitsViewport = async (p, label) => {
   ok(r.scroll <= 0 && r.inside && !r.overlap, `${label}: ${r.n} cards fit the visible screen, no scroll, no overlap (scroll ${r.scroll}, card ${Math.round(r.w)}px)`);
 };
 await page.locator('a.brand').click();
+await page.waitForSelector('.game-box');
+ok(page.url().endsWith('#/'), 'brand returns to the tools page');
+await page.goto(`${BASE}/#/faces`);
 await page.getByRole('button', { name: /סשן חדש/ }).click();
 await page.getByText('השולחן ריק').waitFor();
-ok(page.url().includes('#/session/'), 'session: new session route');
+ok(page.url().includes('#/faces/session/'), 'session: new session route');
 ok(await page.getByRole('radio', { name: 'זוגות' }).getAttribute('aria-checked') === 'true', 'session: default form is pairs');
 await page.getByLabel('שם הסשן').fill('סשן בדיקה');
 await page.getByRole('button', { name: /שליפת זוג/ }).click();
@@ -230,6 +242,69 @@ await page.reload();
 await page.locator('.table-card img').first().waitFor();
 ok(true, 'persistence: session survives reload');
 
+// ---------- משחק האימון: צפייה ושולחן בארבעה שלבים ----------
+await page.goto(`${BASE}/#/coaching`);
+await page.locator('.ring-card img').first().waitFor();
+ok(await count(page, '.ring-caption') >= 12, 'coaching: home ring shows image + word cards');
+ok(await page.getByText('65 מתוך 99 קלפים').isVisible(), 'coaching: library count from Supabase');
+await page.getByRole('link', { name: 'ספריית קלפים' }).click();
+await waitCount(page, '.face-grid li', 65);
+ok(await count(page, '.coach-band input') === 0 && await count(page, '.coach-del') === 0, 'coaching library (viewer): 65 cards, read-only');
+await page.waitForTimeout(800);
+await page.screenshot({ path: join(OUT, '09-coach-library.png') });
+await page.getByRole('link', { name: 'משחק האימון' }).click();
+await page.getByRole('button', { name: /סשן חדש/ }).click();
+await page.locator('.lanes').waitFor();
+ok(page.url().includes('#/coaching/session/'), 'coaching: new session route');
+ok(await page.getByRole('radio', { name: 'ארבעה שלבים' }).getAttribute('aria-checked') === 'true', 'coaching: default form is four stages');
+ok(await count(page, '.lane') === 4, 'coaching: four lanes');
+await page.getByLabel('שם הסשן').fill('אימון בדיקה');
+for (let i = 0; i < 6; i++) await page.locator('.mini-coach').click();
+await page.waitForTimeout(400);
+const perLane = await page.locator('.lane').evaluateAll((ls) => ls.map((l) => l.querySelectorAll('.table-card').length));
+ok(perLane.join(',') === '2,2,1,1', `coaching: deck fills the stages in order (${perLane})`);
+await page.getByRole('button', { name: 'שליפה לשלב עשייה' }).click();
+await page.getByRole('button', { name: 'שליפה לשלב עשייה' }).click();
+await page.waitForTimeout(400);
+ok((await page.locator('.lane').nth(3).locator('.table-card').count()) === 3, 'coaching: lane draw button adds to its stage');
+await page.waitForTimeout(900);
+await fitsViewport(page, 'coaching four stages');
+await page.locator('.lane').nth(2).locator('.table-card').first().click();
+ok(await page.locator('.drawer-q').innerText() === 'מה הכי חשוב כאן? מה התובנה?', 'coaching: note panel shows the stage question');
+await page.locator('.drawer textarea').fill('התובנה: להאט');
+const beforeWord = await page.locator('.lane').nth(2).locator('.coach-word').first().innerText();
+await page.locator('.drawer').getByRole('button', { name: 'החלפת הקלף' }).click();
+await page.waitForTimeout(400);
+ok((await page.locator('.lane').nth(2).locator('.coach-word').first().innerText()) !== beforeWord, 'coaching: replace keeps the card in its stage');
+await page.waitForTimeout(800);
+await page.screenshot({ path: join(OUT, '10-coach-stages.png') });
+await page.locator('.drawer').getByRole('button', { name: 'סגירה' }).click();
+await page.getByRole('button', { name: 'שמירה' }).click();
+await page.getByText('הסשן נשמר').waitFor();
+await page.getByRole('radio', { name: 'חופשי' }).click();
+await page.locator('.board-grid').waitFor();
+ok(await count(page, '.lane') === 0 && await count(page, '.table-card') === 8, 'coaching: free form lays all cards on one table');
+await page.getByRole('radio', { name: 'ארבעה שלבים' }).click();
+await page.getByRole('button', { name: 'תצוגת קבוצה' }).click();
+await page.locator('.carousel-card.current').waitFor();
+ok((await page.locator('.counter').innerText()).includes('01 / 04'), 'coaching present: one unit per stage');
+ok((await page.locator('.carousel-card.current .stage-chip').innerText()) === 'עצירה', 'coaching present: stage label');
+await page.keyboard.press('ArrowLeft');
+await page.waitForTimeout(900);
+await page.screenshot({ path: join(OUT, '11-coach-present.png') });
+await page.getByRole('link', { name: 'חזרה לסשן' }).click();
+await page.getByRole('link', { name: 'היסטוריה' }).click();
+await page.locator('.history li').first().waitFor();
+ok(await page.getByText('אימון בדיקה').isVisible() && !(await page.getByText('סשן בדיקה').isVisible()), 'coaching history shows only coaching sessions');
+const [cdl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'CSV', exact: true }).first().click()]);
+const cpath = join(OUT, 'coach-export.csv');
+await cdl.saveAs(cpath);
+const cbody = readFileSync(cpath, 'utf8');
+ok(cbody.includes('משחק האימון') && cbody.includes('עצירה') && cbody.includes('התובנה: להאט'), 'coaching export: game, stage and note');
+await page.goto(`${BASE}/#/faces/history`);
+await page.locator('.history li').first().waitFor();
+ok(!(await page.getByText('אימון בדיקה').isVisible()), 'faces history does not show coaching sessions');
+
 // ---------- מצב עריכה ----------
 const writesBefore = db.requests.filter((r) => !r.startsWith('GET') && !r.includes('/rpc/')).length;
 ok(writesBefore === 0, 'viewer made no write requests');
@@ -243,7 +318,7 @@ await page.screenshot({ path: join(OUT, '06b-studio-viewer.png') });
 await page.locator('#studio-key').fill(TEST_KEY);
 await page.getByRole('button', { name: 'כניסה', exact: true }).click();
 await page.waitForLoadState('load');
-await page.goto(`${BASE}/#/faces`);
+await page.goto(`${BASE}/#/faces/library`);
 await page.getByText('מצב עריכה').waitFor();
 ok(true, 'A&I: key entry turns on edit mode');
 await page.getByRole('button', { name: /A&I/ }).click();
@@ -256,7 +331,7 @@ await page.getByRole('button', { name: 'הפעלת מצב עריכה' }).click()
 await page.screenshot({ path: join(OUT, '06c-studio-editor.png') });
 await page.getByRole('button', { name: 'עריכת ספריית פנים' }).click();
 await page.getByText('מצב עריכה. כל שינוי').waitFor();
-await page.goto(`${BASE}/?key=${TEST_KEY}#/faces`);
+await page.goto(`${BASE}/?key=${TEST_KEY}#/faces/library`);
 await page.getByText('מצב עריכה. כל שינוי').waitFor();
 ok(!page.url().includes('key='), 'edit: key link removed from address bar');
 await page.getByTestId('face-input').setInputFiles([...files, bad, fakeJpg]);
@@ -309,10 +384,28 @@ await page.waitForTimeout(300);
 ok(db.faces_settings[0].blanks === 7 && (await page.locator('.stepper .mono').innerText()) === '7', 'edit: blanks saved');
 await page.getByRole('button', { name: 'יותר' }).click();
 
+// ---------- עריכת קלפי האימון ----------
+await page.goto(`${BASE}/#/coaching/library`);
+await page.getByText('מצב עריכה. כל שינוי').waitFor();
+await page.getByTestId('coach-input').setInputFiles(files.slice(0, 2));
+await waitCount(page, '.face-grid li', 67);
+ok(db.faces_coach_cards.length === 67 && [...db.files.keys()].filter((k) => k.startsWith('coach/')).length === 2, 'coach edit: images uploaded under coach/');
+await page.getByLabel('עריכת המילה face-1').fill('הקשבה עמוקה');
+await page.getByLabel('עריכת המילה face-1').press('Enter');
+await page.waitForTimeout(300);
+ok(db.faces_coach_cards.some((c) => c.word === 'הקשבה עמוקה'), 'coach edit: word on uploaded card saved');
+await page.getByRole('button', { name: 'מחיקת אפשרות' }).click();
+await page.getByRole('alertdialog').getByRole('button', { name: 'מחיקה' }).click();
+await waitCount(page, '.face-grid li', 66);
+await page.getByRole('button', { name: /החזרת קלפי הפתיחה \(1\)/ }).click();
+await page.getByText('1 קלפים הוחזרו').waitFor();
+ok(db.faces_coach_cards.length === 67, 'coach edit: delete and restore starter card');
+await page.screenshot({ path: join(OUT, '12-coach-edit.png') });
+
 // ---------- ללא רשת ----------
 expectNetErrors = true;
 db.offline = true;
-await page.goto(`${BASE}/#/faces`);
+await page.goto(`${BASE}/#/faces/library`);
 await page.reload();
 await page.getByText('אין חיבור לספרייה המשותפת').waitFor();
 ok(await count(page, '.face-grid li') === 66, 'offline: cached library still shown');
@@ -339,15 +432,15 @@ const noHScroll = async (label) => {
   const w = await mp.evaluate(() => [document.documentElement.scrollWidth, window.innerWidth]);
   ok(w[0] <= w[1] && w[1] === 390, `${label}: no horizontal scroll (${w[0]} <= ${w[1]})`);
 };
-for (const [hash, name] of [['#/', 'home'], ['#/faces', 'faces'], ['#/reflections', 'reflections'], ['#/history', 'history']]) {
+for (const [hash, name] of [['#/', 'suite'], ['#/faces', 'home'], ['#/faces/library', 'faces'], ['#/faces/words', 'reflections'], ['#/faces/history', 'history'], ['#/coaching', 'coach-home'], ['#/coaching/library', 'coach-library']]) {
   await mp.goto(BASE + '/' + hash);
   await mp.reload();
   await mp.waitForTimeout(1000);
   await noHScroll(`mobile ${name}`);
   await mp.screenshot({ path: join(OUT, `m-${name}.png`) });
 }
-const sid = JSON.parse(JSON.parse(ls)['faces.sessions'])[0].id;
-await mp.goto(`${BASE}/#/session/${sid}`);
+const sid = JSON.parse(JSON.parse(ls)['faces.sessions']).find((x) => (x.game ?? 'faces') === 'faces').id;
+await mp.goto(`${BASE}/#/faces/session/${sid}`);
 await mp.reload();
 await mp.locator('.table-card img').first().waitFor();
 await mp.waitForTimeout(900);
@@ -363,14 +456,26 @@ await mp.waitForTimeout(700);
 const mInside = await mp.evaluate(() => { const b = document.querySelector('.board').getBoundingClientRect(); return [...document.querySelectorAll('.table-card')].every((c) => { const r = c.getBoundingClientRect(); return r.top >= b.top - 1 && r.bottom <= b.bottom + 1; }); });
 ok(mScroll <= 0 && mInside, `mobile session: table fits the visible screen (scroll ${mScroll})`);
 await mp.screenshot({ path: join(OUT, 'm-session.png') });
-await mp.goto(`${BASE}/#/present/${sid}`);
+await mp.goto(`${BASE}/#/faces/present/${sid}`);
 await mp.waitForTimeout(900);
 await noHScroll('mobile present');
 await mp.screenshot({ path: join(OUT, 'm-present.png') });
+const csid = JSON.parse(JSON.parse(ls)['faces.sessions']).find((x) => x.game === 'coaching').id;
+await mp.goto(`${BASE}/#/coaching/session/${csid}`);
+await mp.reload();
+await mp.locator('.lane .table-card img').first().waitFor();
+await mp.waitForTimeout(1000);
+await noHScroll('mobile coaching stages');
+const cScroll = await mp.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
+const cInside = await mp.evaluate(() => [...document.querySelectorAll('.lane')].every((l) => { const b = l.getBoundingClientRect(); return [...l.querySelectorAll('.table-card')].every((c) => { const r = c.getBoundingClientRect(); return r.bottom <= b.bottom + 1 && r.left >= b.left - 1 && r.right <= b.right + 1; }); }));
+ok(cScroll <= 0 && cInside, `mobile coaching: four lanes fit the visible screen (scroll ${cScroll})`);
+await mp.screenshot({ path: join(OUT, 'm-coach-stages.png') });
+await mp.goto(`${BASE}/#/faces/present/${sid}`);
+await mp.waitForTimeout(600);
 await mp.getByRole('button', { name: 'תפריט', exact: true }).tap();
 await mp.getByRole('link', { name: 'ספריית פנים' }).tap();
 await mp.waitForTimeout(500);
-ok(mp.url().endsWith('#/faces'), 'mobile: menu navigation');
+ok(mp.url().endsWith('#/faces/library'), 'mobile: menu navigation');
 
 // ---------- התקנה ----------
 {

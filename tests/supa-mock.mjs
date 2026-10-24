@@ -1,6 +1,7 @@
 // מוק ל-Supabase: PostgREST, RPC ואחסון, עם בדיקת מפתח עריכה כמו ה-RLS האמיתי
 export const TEST_KEY = 'test-editor-key-1234567890';
 const EXPR = ['שמחה', 'עצב', 'הפתעה', 'כעס', 'מחשבה', 'שלווה', 'צחוק', 'דאגה', 'חיוך עקום', 'עייפות'];
+export const COACH_WORDS = ['אפשרות', 'מעבר', 'פתיחות', 'צעד', 'חיבור', 'אופק', 'שורשים', 'מסע', 'עלייה', 'שער', 'מנוחה', 'אמת', 'גבולות', 'הזדמנות', 'ויתור', 'בהירות', 'סבלנות', 'תנועה', 'איזון', 'החלטה', 'נקודת מבט', 'מרחב', 'זמן', 'אור', 'צל', 'עומק', 'קלילות', 'אחיזה', 'שחרור', 'כיוון', 'מפגש', 'קשב', 'דמיון', 'כוונה', 'משאב', 'תמיכה', 'תעוזה', 'ספקנות', 'ציפייה', 'התחדשות', 'פשטות', 'מורכבות', 'יציבות', 'זרימה', 'משמעות', 'ערכים', 'חזון', 'מחויבות', 'הודיה', 'שקט פנימי', 'קשר', 'גמישות', 'למידה', 'טעות', 'הצלחה', 'חשש', 'משאלה', 'מקום', 'דרך חדשה', 'נשימה', 'ראייה', 'נוכחות', 'השראה', 'פריחה', 'בחירה חופשית'];
 const WORDS = ['אומץ', 'פחד', 'געגוע', 'שמחה', 'בדידות', 'שייכות', 'אמון', 'ספק', 'חופש', 'גבול', 'כעס', 'סליחה', 'תקווה', 'אכזבה', 'סקרנות', 'שקט', 'מנוחה', 'תנועה', 'שינוי', 'הרגל', 'בית', 'דרך', 'משפחה', 'חברות', 'אהבה', 'קנאה', 'גאווה', 'בושה', 'הכרת תודה', 'אחריות', 'שליטה', 'שחרור', 'חלום', 'זיכרון', 'עתיד', 'רגע', 'משחק', 'יצירה', 'כוח', 'פגיעות', 'הקשבה', 'שתיקה', 'מגע', 'מרחק', 'צמיחה', 'סיום', 'התחלה', 'בחירה', 'נדיבות', 'אני'];
 
 export function createDb() {
@@ -8,6 +9,7 @@ export function createDb() {
     faces_faces: Array.from({ length: 60 }, (_, i) => ({ id: `starter-${i + 1}`, name: `${String(i + 1).padStart(2, '0')} · ${EXPR[i % 10]}`, image_path: null, starter: i + 1, sort: i + 1 })),
     faces_words: WORDS.map((text, i) => ({ id: `starter-w${i + 1}`, text, sort: i + 1 })),
     faces_settings: [{ id: 1, blanks: 8 }],
+    faces_coach_cards: COACH_WORDS.map((word, i) => ({ id: `coach-${i + 1}`, word, image_path: null, starter: i + 1, sort: i + 1 })),
     files: new Map(),
     requests: [],
     offline: false,
@@ -38,7 +40,7 @@ export async function mockSupabase(ctx, db) {
       if (method === 'POST') {
         const body = req.postDataJSON();
         const rows = Array.isArray(body) ? body : [body];
-        if (rest[1] === 'faces_faces' && table.length + rows.length > 99) return json(route, { message: 'faces_faces limit 99' }, 400);
+        if ((rest[1] === 'faces_faces' || rest[1] === 'faces_coach_cards') && table.length + rows.length > 99) return json(route, { message: 'faces_faces limit 99' }, 400);
         table.push(...rows);
         return route.fulfill({ status: 201, body: '' });
       }

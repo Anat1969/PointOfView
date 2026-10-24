@@ -10,9 +10,20 @@ export type Face = {
 
 export type Word = { id: string; text: string; sort?: number };
 
+/** קלף משחק האימון: תמונה ומילה על אותו קלף */
+export type CoachCard = {
+  id: string;
+  word: string;
+  image_path?: string | null;
+  starter?: number | null;
+  sort?: number;
+};
+
+export type GameId = 'faces' | 'coaching';
+
 export type Reflections = { words: Word[]; blanks: number };
 
-export type CardKind = 'face' | 'reflection';
+export type CardKind = 'face' | 'reflection' | 'coach';
 
 export type SessionCard = {
   id: string;
@@ -24,15 +35,19 @@ export type SessionCard = {
   note: string;
   /** מזהה זוג: פנים והשתקפות שנשלפו יחד */
   pair?: string;
+  /** שלב בצורת המשחק "ארבעה שלבים" (0 עד 3) */
+  stage?: number;
 };
 
 /** צורת המשחק קובעת מה נשלף ואיך השולחן מסודר */
-export type GameForm = 'pairs' | 'faces' | 'free';
+export type GameForm = 'pairs' | 'faces' | 'free' | 'stages';
 
 export type SessionMode = 'personal' | 'group';
 
 export type Session = {
   id: string;
+  /** סשנים ישנים בלי שדה זה שייכים ל-Faces */
+  game?: GameId;
   title: string;
   mode: SessionMode;
   form?: GameForm;
@@ -47,3 +62,4 @@ export const MAX_FACES = 99;
 export const MAX_REFLECTIONS = 58;
 export const MAX_BLANKS = 8;
 export const MAX_WORDS = MAX_REFLECTIONS - MAX_BLANKS;
+export const MAX_COACH = 99;

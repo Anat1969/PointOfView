@@ -1,6 +1,8 @@
 import type { Session } from './types';
 import { getState } from './store';
 import { isBlank } from './deck';
+import { GAMES, gameOf } from './games';
+import { STAGES } from './coach';
 
 function download(name: string, content: string, type: string) {
   const blob = new Blob([content], { type });
@@ -14,6 +16,7 @@ function download(name: string, content: string, type: string) {
 }
 
 export function cardLabel(c: Session['cards'][number]): string {
+  if (c.kind === 'coach') return c.text ?? '';
   if (c.kind === 'face') {
     return getState().faces.find((f) => f.id === c.refId)?.name ?? 'פנים שנמחקו';
   }
@@ -39,15 +42,17 @@ export function exportJSON(sessions: Session[]) {
 const esc = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
 
 export function exportCSV(sessions: Session[]) {
-  const head = ['סשן', 'תאריך', 'סוג', 'משתתפים', 'מספר', 'סוג קלף', 'תוכן', 'הערה'];
+  const head = ['סשן', 'משחק', 'תאריך', 'סוג', 'משתתפים', 'מספר', 'שלב', 'סוג קלף', 'תוכן', 'הערה'];
   const rows = sessions.flatMap((s) =>
     s.cards.map((c, i) => [
       s.title,
+      GAMES[gameOf(s)].name,
       new Date(s.createdAt).toLocaleDateString('he-IL'),
       s.mode === 'group' ? 'קבוצתי' : 'אישי',
       s.participants,
       i + 1,
-      c.kind === 'face' ? 'פנים' : 'השתקפות',
+      c.stage !== undefined ? STAGES[c.stage].name : '',
+      c.kind === 'face' ? 'פנים' : c.kind === 'coach' ? 'קלף אימון' : 'השתקפות',
       cardLabel(c),
       c.note,
     ])

@@ -1,7 +1,7 @@
 import { animate, motion, useMotionValue, useReducedMotion, useTransform } from 'framer-motion';
 import { useEffect, useMemo, useRef } from 'react';
 
-export type RingItem = { key: string; url?: string; word?: string };
+export type RingItem = { key: string; url?: string; word?: string; caption?: string };
 
 /** טבעת קלפים תלת־ממדית שמסתובבת לאט, וניתנת לגרירה */
 export function Ring3D({ items }: { items: RingItem[] }) {
@@ -55,6 +55,7 @@ export function Ring3D({ items }: { items: RingItem[] }) {
             style={{ transform: `rotateY(${i * step}deg) translateZ(${radius}px)` }}
           >
             {it.url ? <img src={it.url} alt="" draggable={false} /> : it.word ? <span>{it.word}</span> : <i />}
+            {it.caption && <b className="ring-caption">{it.caption}</b>}
           </div>
         ))}
       </motion.div>
