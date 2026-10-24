@@ -395,18 +395,24 @@ textarea { resize: vertical; line-height: 1.55; }
 .table-card:hover { transform: translateY(-4px); }
 .table-card:focus-visible { outline: 2px solid var(--refl); outline-offset: 3px; }
 .table-card.selected { outline: 3px solid var(--refl); outline-offset: 3px; }
-.table-card .card-face, .drawer-card .card-face, .carousel-card .card-face { container-type: inline-size; }
+.table-card .card-face, .table-card .flip-front, .drawer-card .card-face, .carousel-card .card-face { container-type: inline-size; }
 .table-card .card-face.reflection .word { font-size: clamp(10px, 13cqw, 42px); overflow-wrap: normal; word-break: keep-all; }
 .table-card .card-tag { font-size: clamp(8px, 6cqw, 11px); }
 .table-card .blank-hint { display: none; }
 /* בקלף קטן התווית מסתירה את התוכן: הצבע כבר מבחין בין פנים להשתקפות */
 @container (max-width: 96px) {
   .table-card .card-tag { display: none; }
+  .table-card .card-face.reflection { padding: 8px 3px; }
+  .table-card .card-face.reflection .word { font-size: 18cqw; }
+}
+@container (max-width: 110px) {
+  .table-card .note-flag { font-size: 0; width: 9px; height: 9px; padding: 0; background: var(--refl); border: 2px solid #fff; }
 }
 .note-flag { position: absolute; bottom: 6px; inset-inline-end: 6px; font-family: var(--mono); font-size: 10px; padding: 1px 7px; border-radius: 999px; background: rgba(255,255,255,.9); color: var(--ink); box-shadow: var(--shadow-1); }
 
+.stage-body.with-drawer { grid-template-columns: auto minmax(0, 1fr) clamp(260px, 26vw, 340px); }
 .drawer {
-  position: absolute; inset-block: 0; inset-inline-end: 0; width: min(360px, 100%); z-index: 6; overflow: auto;
+  position: relative; min-width: 0; min-height: 0; overflow: auto; transform-origin: left center;
   display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: 22px;
   background: linear-gradient(170deg, rgba(251,250,248,.97), rgba(235,233,229,.97)); box-shadow: var(--shadow-3); backdrop-filter: blur(10px);
 }
@@ -430,7 +436,11 @@ textarea { resize: vertical; line-height: 1.55; }
   .mini-title { font-size: 13px; }
   .mini-top .mono { font-size: 9px; }
   .rail-hint { max-width: none; }
-  .drawer { inset-block: auto 0; max-height: 78%; width: 100%; }
+  .stage-body.with-drawer { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; }
+  .drawer { max-height: 46dvh; padding: 12px 14px; gap: 8px; border-radius: 18px; }
+  .drawer .drawer-card { display: none; }
+  .drawer textarea { min-height: 0; height: 64px; resize: none; }
+  .drawer .btn { min-height: 34px; }
 }
 
 /* תצוגת קבוצה: זוג מוצג יחד */
@@ -467,3 +477,13 @@ textarea { resize: vertical; line-height: 1.55; }
   .studio-btn { padding: 4px; }
   .studio { order: 0; margin-inline-start: 0; }
 }
+
+/* מסגרת פנימית דקה ונייר: עומק לקלף גם בגודל קטן */
+.card-face::after { content: ''; position: absolute; inset: 5%; border: 1px solid rgba(255,255,255,.32); border-radius: 8px; pointer-events: none; }
+.card-face.reflection.blank::after { border-color: rgba(23,24,27,.12); }
+.card-face.reflection {
+  background:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .07 0'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>"),
+    radial-gradient(120% 90% at 30% 10%, #4a78a6 0%, var(--refl) 40%, var(--refl-deep) 100%);
+}
+.card-face.reflection .word { text-shadow: 0 2px 12px rgba(0,0,0,.25); letter-spacing: .01em; }

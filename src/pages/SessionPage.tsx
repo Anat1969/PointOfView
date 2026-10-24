@@ -132,17 +132,6 @@ export function SessionPage({ id }: { id: string }) {
     update({ cards: s.cards.map((x) => (x.id === c.id ? { ...next, id: c.id, pair: c.pair, note: c.note } : x)) });
   };
 
-  const removeCard = (c: SessionCard) =>
-    confirmAction({
-      title: 'להסיר את הקלף מהשולחן?',
-      body: c.note ? 'גם ההערה שנכתבה לקלף תימחק.' : undefined,
-      action: 'הסרה',
-      onConfirm: () => {
-        setSelected(null);
-        update({ cards: s.cards.filter((x) => x.id !== c.id) });
-      },
-    });
-
   const save = () => {
     const list = getState().sessions;
     const exists = list.some((x) => x.id === s.id);
@@ -197,7 +186,8 @@ export function SessionPage({ id }: { id: string }) {
         </div>
       </header>
 
-      <div className="stage-body">
+      {/* החלונית מקבלת עמודה משלה: השולחן מצטמצם והקלפים מסתדרים מחדש, ושום קלף לא מוסתר */}
+      <div className={`stage-body ${sel || details ? 'with-drawer' : ''}`}>
         <aside className="deck-rail" aria-label="חפיסות">
           {form === 'pairs' && <MiniDeck kind="pair" label="שליפת זוג" left={Math.min(facesLeft, reflLeft)} onDraw={() => draw(['face', 'reflection'])} />}
           {form !== 'pairs' && <MiniDeck kind="face" label="שליפת פנים" left={facesLeft} onDraw={() => draw(['face'])} />}
@@ -246,9 +236,8 @@ export function SessionPage({ id }: { id: string }) {
           {(sel || details) && (
             <motion.aside
               className="drawer"
-              initial={{ opacity: 0, x: -40, rotateY: 12 }}
+              initial={{ opacity: 0, x: -30, rotateY: 14 }}
               animate={{ opacity: 1, x: 0, rotateY: 0 }}
-              exit={{ opacity: 0, x: -30 }}
               transition={{ type: 'spring', stiffness: 260, damping: 28 }}
               aria-label={sel ? 'הערה לקלף' : 'פרטי הסשן'}
             >
@@ -271,14 +260,9 @@ export function SessionPage({ id }: { id: string }) {
                     rows={5}
                     autoFocus
                   />
-                  <div className="row wrap">
-                    <button className="btn ghost sm" onClick={() => replace(sel)}>
-                      החלפה
-                    </button>
-                    <button className="btn ghost sm danger-text" onClick={() => removeCard(sel)}>
-                      הסרה
-                    </button>
-                  </div>
+                  <button className="btn ghost sm" onClick={() => replace(sel)}>
+                    החלפת הקלף
+                  </button>
                 </>
               ) : (
                 <>
