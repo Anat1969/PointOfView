@@ -12,6 +12,7 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>
 );
 
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
+// ה-service worker רק בפריסה הראשית. בגרסה שמוגשת מתיקייה בריפו (app/) הוא לא נרשם
+if ('serviceWorker' in navigator && import.meta.env.PROD && import.meta.env.BASE_URL === '/') {
   window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
 }
