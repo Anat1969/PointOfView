@@ -40,10 +40,10 @@ export const GAMES: Record<GameId, GameConfig> = {
     heroLines: ['תמונה ומילה', 'פותחות דרך'],
     about: 'קלפים של תמונה ומילה שמחברים בין האינטואיציה לחשיבה, ומאיצים מחקר פנימי, שינוי נקודת מבט ותובנות חדשות.',
     forms: [
-      { id: 'stages', label: 'ארבעה שלבים', hint: 'עצירה, הרחבה, מיקוד ועשייה: שולפים קלף לכל שלב.' },
+      { id: 'journey', label: 'מפת שלוש תחנות', hint: 'נושא, בחירה עיוורת של שלושה קלפים, חקירת התחנות ומנוף לפעולה.' },
       { id: 'free', label: 'חופשי', hint: 'שולפים קלפים לפי הצורך.' },
     ],
-    defaultForm: 'stages',
+    defaultForm: 'journey',
     libraries: [{ path: 'library', label: 'ספריית קלפים' }],
   },
 };

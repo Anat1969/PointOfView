@@ -7,9 +7,9 @@ export type Unit = { key: string; cards: SessionCard[]; stage?: number };
 export const formOf = (s: Session): GameForm => s.form ?? GAMES[gameOf(s)].defaultForm;
 
 export function toUnits(s: Session): Unit[] {
-  // ארבעה שלבים: כל שלב הוא נתיב, והקלפים שלו בתוכו
-  if (formOf(s) === 'stages')
-    return [0, 1, 2, 3].map((st) => ({ key: `stage-${st}`, stage: st, cards: s.cards.filter((c) => (c.stage ?? 0) === st) }));
+  // מפת שלוש התחנות: יחידה לכל תחנה, לפי סדר התהליך
+  if (formOf(s) === 'journey')
+    return [0, 1, 2].map((st) => ({ key: `station-${st}`, stage: st, cards: s.cards.filter((c) => c.stage === st) }));
   if (formOf(s) !== 'pairs') return s.cards.map((c) => ({ key: c.id, cards: [c] }));
   const units: Unit[] = [];
   const byPair = new Map<string, Unit>();

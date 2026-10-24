@@ -4,7 +4,7 @@ import { CardFace } from '../components/CardFace';
 import { go } from '../lib/router';
 import { useStore } from '../lib/store';
 import { toUnits } from '../lib/units';
-import { STAGES } from '../lib/coach';
+import { STATIONS } from '../lib/coach';
 import type { GameId } from '../lib/types';
 import { useFaceImages } from '../lib/useImages';
 
@@ -118,7 +118,7 @@ export function Present({ id, index, game }: { id: string; index: number; game: 
               {u.cards.map((c) => (
                 <CardFace key={c.id} card={c} url={c.kind === 'reflection' ? undefined : urls.get(c.refId)} big />
               ))}
-              {u.stage !== undefined && <span className="stage-chip">{STAGES[u.stage].name}</span>}
+              {u.stage !== undefined && STATIONS[u.stage] && <span className="stage-chip">{STATIONS[u.stage].name}</span>}
             </motion.button>
           );
         })}

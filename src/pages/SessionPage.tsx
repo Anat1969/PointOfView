@@ -10,7 +10,7 @@ import { go } from '../lib/router';
 import { getState, setState, useStore } from '../lib/store';
 import type { GameId, Session, SessionCard } from '../lib/types';
 import { GAMES } from '../lib/games';
-import { STAGES } from '../lib/coach';
+import { Journey } from './Journey';
 import { fitGrid, formOf, toUnits } from '../lib/units';
 import { useFaceImages } from '../lib/useImages';
 import { newSession } from './Home';
@@ -76,14 +76,8 @@ export function SessionPage({ id, game }: { id: string; game: GameId }) {
   const form = s ? formOf(s) : cfg.defaultForm;
   const perUnit = form === 'pairs' ? 2 : 1;
   const GAP = box.w < 520 ? 10 : 18;
-  const stagesForm = form === 'stages';
-  // ארבעה שלבים: ארבעה נתיבים, והקלפים מסודרים בכל נתיב לפי הנתיב העמוס ביותר
-  const LANE_HEAD = box.w < 520 ? 54 : 78;
-  const laneW = (box.w - GAP * 3 - 8) / 4;
-  const laneMax = Math.max(1, ...units.map((u) => u.cards.length));
-  const fit = stagesForm
-    ? fitGrid(laneMax, 1, laneW - 12, box.h - LANE_HEAD - 16, 8, INNER)
-    : fitGrid(units.length, perUnit, box.w, box.h, GAP, INNER);
+  const journeyForm = form === 'journey';
+  const fit = fitGrid(units.length, perUnit, box.w, box.h, GAP, INNER);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && (setSelected(null), setDetails(false));
@@ -117,14 +111,6 @@ export function SessionPage({ id, game }: { id: string; game: GameId }) {
   const facesLeft = faces.length - s.cards.filter((c) => c.kind === 'face').length;
   const reflLeft = reflectionDeck(refl).length - s.cards.filter((c) => c.kind === 'reflection').length;
   const coachLeft = coach.length - s.cards.filter((c) => c.kind === 'coach').length;
-  // השלב הבא: הנתיב עם הכי מעט קלפים, ובשוויון הראשון
-  const nextStage = [0, 1, 2, 3].reduce((best, st) => (units[st] && units[st].cards.length < units[best].cards.length ? st : best), 0);
-
-  const drawToStage = (stage: number) => {
-    const c = drawCard(s, 'coach');
-    if (!c) return toast('אין קלפים פנויים בחפיסה', 'error');
-    update({ cards: [...s.cards, { ...c, stage }] });
-  };
 
   const draw = (kinds: SessionCard['kind'][]) => {
     const added: SessionCard[] = [];
@@ -206,7 +192,11 @@ export function SessionPage({ id, game }: { id: string; game: GameId }) {
       </header>
 
       {/* החלונית מקבלת עמודה משלה: השולחן מצטמצם והקלפים מסתדרים מחדש, ושום קלף לא מוסתר */}
-      <div className={`stage-body ${sel || details ? 'with-drawer' : ''}`}>
+      <div className={`stage-body ${journeyForm ? 'journey-body' : ''} ${sel || details ? 'with-drawer' : ''}`}>
+        {journeyForm ? (
+          <Journey s={s} update={update} onSave={save} />
+        ) : (
+        <>
         <aside className="deck-rail" aria-label="חפיסות">
           {game === 'faces' ? (
             <>
@@ -219,44 +209,14 @@ export function SessionPage({ id, game }: { id: string; game: GameId }) {
             </>
           ) : (
             <>
-              <MiniDeck
-                kind="coach"
-                label={stagesForm ? `שליפה ל${STAGES[nextStage].name}` : 'שליפת קלף'}
-                left={coachLeft}
-                onDraw={() => (stagesForm ? drawToStage(nextStage) : draw(['coach']))}
-              />
+              <MiniDeck kind="coach" label="שליפת קלף" left={coachLeft} onDraw={() => draw(['coach'])} />
               {!coach.length && <p className="rail-hint">הספרייה עוד נטענת, או שהיא ריקה.</p>}
             </>
           )}
         </aside>
 
         <div className="board" ref={boardRef}>
-          {stagesForm ? (
-            <ol className="lanes" style={{ gap: GAP, ['--card-w' as string]: `${fit.cardW}px`, ['--lane-head' as string]: `${LANE_HEAD}px` }}>
-              {units.map((u) => (
-                <li key={u.key} className={`lane ${u.stage === nextStage && coachLeft > 0 ? 'next' : ''}`}>
-                  <div className="lane-head">
-                    <span className="mono">{String((u.stage ?? 0) + 1).padStart(2, '0')}</span>
-                    <strong>{STAGES[u.stage ?? 0].name}</strong>
-                    <span className="lane-q">{STAGES[u.stage ?? 0].question}</span>
-                    <button className="btn ghost xs lane-draw" onClick={() => drawToStage(u.stage ?? 0)} disabled={coachLeft <= 0} aria-label={`שליפה לשלב ${STAGES[u.stage ?? 0].name}`}>
-                      שליפה
-                    </button>
-                  </div>
-                  <div className="lane-cards" style={{ gridTemplateColumns: `repeat(${fit.cols}, auto)` }}>
-                    {u.cards.map((c) => {
-                      const i = order++;
-                      return (
-                        <button key={c.id} className={`table-card ${selected === c.id ? 'selected' : ''}`} onClick={() => (setSelected(c.id), setDetails(false))} aria-label={`קלף ${i + 1}, ${c.text}. פתיחת הערה`}>
-                          <FlipCard key={c.refId} card={c} url={urls.get(c.refId)} index={i} />
-                        </button>
-                      );
-                    })}
-                  </div>
-                </li>
-              ))}
-            </ol>
-          ) : units.length === 0 ? (
+          {units.length === 0 ? (
             <div className="board-empty">
               <h2>השולחן ריק</h2>
               <p>{cfg.forms.find((f) => f.id === form)?.hint}</p>
@@ -289,6 +249,8 @@ export function SessionPage({ id, game }: { id: string; game: GameId }) {
             </motion.ol>
           )}
         </div>
+        </>
+        )}
 
         <AnimatePresence>
           {(sel || details) && (
@@ -302,7 +264,7 @@ export function SessionPage({ id, game }: { id: string; game: GameId }) {
               <div className="drawer-head">
                 <span className="label">
                   {sel
-                    ? `קלף ${selIndex + 1} · ${sel.kind === 'face' ? 'פנים' : sel.kind === 'coach' ? (stagesForm ? STAGES[sel.stage ?? 0].name : 'קלף אימון') : isBlank(sel) ? 'קלף ריק' : 'השתקפות'}`
+                    ? `קלף ${selIndex + 1} · ${sel.kind === 'face' ? 'פנים' : sel.kind === 'coach' ? 'קלף אימון' : isBlank(sel) ? 'קלף ריק' : 'השתקפות'}`
                     : 'פרטי הסשן'}
                 </span>
                 <button className="btn ghost xs" onClick={() => (setSelected(null), setDetails(false))}>
@@ -314,7 +276,6 @@ export function SessionPage({ id, game }: { id: string; game: GameId }) {
                   <div className="drawer-card">
                     <CardFace card={sel} url={sel.kind === 'reflection' ? undefined : urls.get(sel.refId)} />
                   </div>
-                  {sel.kind === 'coach' && stagesForm && <p className="drawer-q">{STAGES[sel.stage ?? 0].question}</p>}
                   <div className="voice-box">
                     <textarea
                       aria-label={`הערה לקלף ${selIndex + 1}`}
