@@ -4,12 +4,19 @@ import type { GameForm, Session, SessionCard } from './types';
 /** יחידה על השולחן: קלף בודד, או זוג פנים והשתקפות */
 export type Unit = { key: string; cards: SessionCard[]; stage?: number };
 
-export const formOf = (s: Session): GameForm => s.form ?? GAMES[gameOf(s)].defaultForm;
+// סשן ישן של פנים בלי צורה שמורה נפתח כזוגות, כמו שנוצר
+export const formOf = (s: Session): GameForm =>
+  s.form ?? (gameOf(s) === 'faces' && s.cards.some((c) => c.stage === undefined) ? 'pairs' : GAMES[gameOf(s)].defaultForm);
 
 export function toUnits(s: Session): Unit[] {
   // מפת שלוש התחנות: יחידה לכל תחנה, לפי סדר התהליך
   if (formOf(s) === 'journey')
-    return [0, 1, 2].map((st) => ({ key: `station-${st}`, stage: st, cards: s.cards.filter((c) => c.stage === st) }));
+    return [0, 1, 2].map((st) => ({
+      key: `station-${st}`,
+      stage: st,
+      // במסע פנים: פנים קודם, השתקפות אחריהן
+      cards: s.cards.filter((c) => c.stage === st).sort((a, b) => (a.kind === b.kind ? 0 : a.kind === 'face' ? -1 : 1)),
+    }));
   if (formOf(s) !== 'pairs') return s.cards.map((c) => ({ key: c.id, cards: [c] }));
   const units: Unit[] = [];
   const byPair = new Map<string, Unit>();

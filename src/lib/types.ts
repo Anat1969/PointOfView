@@ -35,7 +35,7 @@ export type SessionCard = {
   note: string;
   /** מזהה זוג: פנים והשתקפות שנשלפו יחד */
   pair?: string;
-  /** תחנה במפת משחק האימון: 0 אני, 1 האחר או הרצוי, 2 החוסם */
+  /** עמדה בתהליך המודרך: במשחק האימון 0 אני, 1 האחר או הרצוי, 2 החוסם. בפנים 0 עכשיו, 1 מסתתרות, 2 רוצה לפגוש */
   stage?: number;
 };
 
@@ -46,7 +46,7 @@ export type SessionMode = 'personal' | 'group';
 
 export type Session = {
   id: string;
-  /** סשנים ישנים בלי שדה זה שייכים ל-Faces */
+  /** סשנים ישנים בלי שדה זה שייכים לפנים */
   game?: GameId;
   title: string;
   mode: SessionMode;
@@ -57,7 +57,11 @@ export type Session = {
   flipped?: boolean;
   insight?: string;
   focus?: number;
-  action?: { what: string; when: string; measure: string };
+  action?: { what: string; when: string; measure: string; /** תאריך יעד YYYY-MM-DD */ due?: string };
+  /** תמונת ההתחייבות: נבנית מהסשן בפרומפט, ונשמרת בדלי faces-media */
+  vision?: { path: string; distill: string; prompt: string; title?: string; at: number };
+  /** סגירת המעגל: ההתחייבות בוצעה, ומה קרה כשעשיתי */
+  done?: { at: number; note: string };
   participants: string;
   summary: string;
   cards: SessionCard[];

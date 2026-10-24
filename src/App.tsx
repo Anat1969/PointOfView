@@ -19,7 +19,7 @@ const PAGE_TITLES: Record<Route['page'], string> = {
   home: '',
   library: 'ספרייה',
   words: 'השתקפויות',
-  history: 'היסטוריה',
+  history: 'קיר ההתחייבויות',
   session: 'סשן',
   present: 'תצוגת קבוצה',
 };

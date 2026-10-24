@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 export const SUPABASE_URL = 'https://ktqmwpbzcnzkhjskqisy.supabase.co';
-const ANON_KEY =
+export const ANON_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0cW13cGJ6Y256a2hqc2txaXN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxODM4OTgsImV4cCI6MjEwNTc1OTg5OH0.uPKn4hrLk16jhDoajMjPl4OmV5j1b3bMIECVmOdhWGI';
 export const BUCKET = 'faces-media';
 
@@ -44,6 +44,20 @@ export function forgetEditorKey() {
 }
 
 const key = editorKey();
+export const hasEditorKey = () => {
+  try {
+    return !!(key || localStorage.getItem(KEY_STORE));
+  } catch {
+    return !!key;
+  }
+};
+export const currentEditorKey = () => {
+  try {
+    return localStorage.getItem(KEY_STORE) ?? key;
+  } catch {
+    return key;
+  }
+};
 
 export const supa = createClient(SUPABASE_URL, ANON_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
