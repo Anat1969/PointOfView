@@ -559,7 +559,7 @@ input:not([type]), input[type='text'], input[type='password'], textarea, .lib-no
 .stage-body.journey-body { grid-template-columns: minmax(0, 1fr); }
 .stage-body.journey-body.with-drawer { grid-template-columns: minmax(0, 1fr) clamp(260px, 26vw, 340px); }
 .journey { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 14px; min-width: 0; min-height: 0; }
-.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
 .step-btn {
   all: unset; box-sizing: border-box; width: 100%; cursor: pointer; padding: 10px 14px; font-size: 15px; text-align: start;
   background: rgba(255,255,255,.55); box-shadow: inset 0 0 0 1px var(--line), 0 1px 2px rgba(0,0,0,.05); transition: transform .15s, background .2s, box-shadow .2s;
@@ -650,3 +650,97 @@ input:not([type]), input[type='text'], input[type='password'], textarea, .lib-no
   .blind-side { overflow: visible; }
   .station-panel, .commit { overflow: visible; padding: 14px; }
 }
+
+/* מסע פנים: שלוש מראות, בכל אחת פנים בבחירה גלויה והשתקפות בשליפה עיוורת */
+.mirrors { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; width: 100%; max-width: calc((100dvh - var(--bar-h) - 360px) * 4.2 + 32px); margin-inline: auto; perspective: 1200px; }
+.mirror { all: unset; box-sizing: border-box; display: grid; gap: 6px; min-width: 0; cursor: default; }
+.mirror:not(:disabled) { cursor: pointer; }
+.mirror:focus-visible { outline: 2px solid var(--refl); outline-offset: 4px; }
+.mirror-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
+.mirror.active .mirror-pair { outline: 3px solid var(--refl); outline-offset: 4px; }
+.back-refl { background: radial-gradient(circle at 50% 50%, rgba(255,255,255,.12) 0 1.5px, transparent 2px) 0 0 / 10px 10px, linear-gradient(160deg, #345e8a, var(--refl-deep)); }
+.map-back.back-refl { border-radius: 12px; }
+.open-face { all: unset; box-sizing: border-box; display: block; aspect-ratio: 5 / 7; cursor: pointer; overflow: hidden; background: var(--face); border: 2px solid #fff; box-shadow: 0 6px 12px -6px rgba(0,0,0,.45); }
+.open-face img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.open-face:focus-visible { outline: 2px solid var(--refl); outline-offset: 2px; }
+.blind.all-placed { grid-template-columns: minmax(0, 1fr); }
+.blind.all-placed .blind-side { align-items: center; text-align: center; justify-content: center; }
+.blind.all-placed .mirrors { max-width: min(1100px, calc((100dvh - var(--bar-h) - 380px) * 4.2 + 32px)); }
+.mirror .card-face.reflection .word { font-size: clamp(12px, 18cqi, 26px); overflow-wrap: normal; word-break: keep-all; }
+.companion-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-content: start; perspective: 900px; }
+.companion { all: unset; box-sizing: border-box; cursor: pointer; display: grid; gap: 6px; justify-items: center; padding: 10px; text-align: center;
+  background: linear-gradient(170deg, #fbfaf7, #ebe7df); box-shadow: 0 6px 14px -8px rgba(0,0,0,.35), inset 0 0 0 1px rgba(23,24,27,.08); }
+.companion:focus-visible { outline: 2px solid var(--refl); outline-offset: 2px; }
+.companion.on { background: linear-gradient(170deg, #2c5580, var(--refl-deep)); color: #fff; box-shadow: var(--shadow-2); }
+.companion.on .mono { color: #a9bdd2; }
+.companion-card { width: min(100%, 150px, calc((100dvh - var(--bar-h) - 420px) * .7)); min-width: 70px; aspect-ratio: 5 / 7; container-type: inline-size; }
+.companion-name { font-weight: 500; font-size: 15px; }
+.commit-when { display: grid; grid-template-columns: minmax(0, 1fr) 170px; gap: 10px; }
+.commit-when > div { display: grid; gap: 6px; }
+.commit input[type="date"] { font: inherit; padding: 9px 10px; border: 1px solid var(--line); background: #fff; border-radius: 0; }
+
+/* תמונת ההתחייבות: התמונה בתוך מסגרת הקלף */
+.vision-step { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 430px); gap: 22px; min-height: 0; }
+.vision-stage { display: grid; place-items: center; min-height: 0; min-width: 0; perspective: 1400px; }
+.vision-stage .vision-card { width: min(100%, calc(100dvh - var(--bar-h) - 300px)); min-width: 220px; transform: rotateX(4deg) rotateY(-6deg); transition: transform .5s; }
+.vision-stage .vision-card:hover { transform: rotateX(0) rotateY(0); }
+.vision-card { margin: 0; display: grid; gap: 10px; padding: 12px 12px 14px; background: linear-gradient(170deg, #fbfaf7, #ece8e0); box-shadow: 0 24px 50px -24px rgba(0,0,0,.55), 0 2px 0 rgba(255,255,255,.9) inset, inset 0 0 0 1px rgba(23,24,27,.08); transform-style: preserve-3d; }
+.vision-photo { position: relative; aspect-ratio: 1 / 1; overflow: hidden; background: linear-gradient(160deg, #8c8274, var(--face-deep)); perspective: 1000px; }
+.vision-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.vision-empty { position: absolute; inset: 0; display: grid; place-items: center; color: rgba(255,255,255,.85); font-size: 15px; letter-spacing: .02em; }
+.vision-empty.busy { background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.22) 50%, transparent 70%) 0 0 / 250% 100%; animation: vision-shine 1.6s linear infinite; }
+@keyframes vision-shine { from { background-position: 150% 0; } to { background-position: -100% 0; } }
+.vision-stamp { position: absolute; top: 12px; inset-inline-start: 12px; padding: 4px 12px; background: var(--refl); color: #fff; font-size: 14px; font-weight: 500; box-shadow: var(--shadow-1); transform: rotate(-4deg); }
+.vision-card figcaption { display: grid; gap: 4px; }
+.vision-distill { margin: 0; font-size: 17px; font-weight: 300; line-height: 1.4; }
+.vision-what { margin: 0; font-size: 16px; font-weight: 500; line-height: 1.35; }
+.vision-when { font-size: 12px; color: var(--muted); }
+.vision-card.is-done .vision-photo img { filter: saturate(.85); }
+.vision-side { display: flex; flex-direction: column; gap: 12px; min-height: 0; overflow: auto; padding: 18px 20px; background: linear-gradient(170deg, rgba(251,250,248,.96), rgba(235,233,229,.92)); box-shadow: var(--shadow-2); }
+.vision-side .btn { align-self: flex-start; }
+.status-line { margin: 0; padding: 8px 12px; font-size: 14px; background: rgba(35,70,107,.08); border-inline-start: 3px solid var(--refl); }
+.status-line.error { background: rgba(160,40,40,.08); border-color: #a02828; }
+.vision-phases { margin: 0; padding-inline-start: 20px; display: grid; gap: 4px; font-size: 14px; color: var(--muted); }
+.vision-phases li.on { color: var(--ink); font-weight: 500; }
+.vision-phases li.done { text-decoration: line-through; }
+.vision-prompt summary { cursor: pointer; font-size: 14px; font-weight: 500; }
+.vision-prompt p { font-size: 14px; line-height: 1.55; margin: 8px 0; white-space: pre-wrap; }
+
+@media (max-width: 960px) {
+  .vision-step { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; }
+  .vision-stage .vision-card { width: min(100%, 420px); transform: none; }
+  .mirrors { max-width: 100%; gap: 10px; }
+  .companion-card { width: min(100%, 110px); }
+}
+@media (max-width: 760px) {
+  .commit-when { grid-template-columns: minmax(0, 1fr); }
+  .mirrors { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .mirror .map-label { font-size: 11px; }
+}
+
+/* קיר ההתחייבויות: כל סשן הוא כרטיס עם תמונת ההתחייבות שלו, מה שמחכה לי קודם */
+.wall-meter { margin: 0; font-size: 16px; }
+.wall-meter strong { font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 20px; }
+.wall-next { display: grid; gap: 6px; padding: 18px 22px; margin-bottom: 22px; background: #17181b; color: #f2f1ee; box-shadow: var(--shadow-2); }
+.wall-next .label { color: #b9b7b1; }
+.wall-next-what { margin: 0; font-size: clamp(20px, 2.4vw, 30px); font-weight: 300; line-height: 1.3; }
+.due { justify-self: start; padding: 3px 10px; font-size: 13px; background: var(--refl); color: #fff; }
+.due.late { background: #a02828; }
+.wall { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 26px 22px; perspective: 1400px; }
+.wall-item { display: grid; gap: 10px; align-content: start; transform: rotate(var(--tilt, 0deg)); transition: transform .3s; }
+.wall-item:hover { transform: rotate(0) translateY(-4px); }
+.wall-open { all: unset; box-sizing: border-box; display: block; cursor: pointer; }
+.wall-open:focus-visible { outline: 2px solid var(--refl); outline-offset: 4px; }
+.wall-item.done .vision-card { opacity: .82; }
+.wall-item.late .vision-card { box-shadow: 0 24px 50px -24px rgba(0,0,0,.55), inset 0 0 0 2px #a02828; }
+.wall-fallback { display: grid; place-items: center; }
+.wall-fallback span { grid-area: 1 / 1; width: 34%; aspect-ratio: 5 / 7; overflow: hidden; border: 2px solid #fff; box-shadow: var(--shadow-2); transform-origin: 50% 120%; }
+.wall-fallback span img { width: 100%; height: 100%; object-fit: cover; }
+.wall-fallback em { position: absolute; bottom: 10px; inset-inline: 0; text-align: center; font-style: normal; font-size: 13px; color: rgba(255,255,255,.85); }
+.wall-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.wall-foot > .mono { flex: 1 1 100%; font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.close-loop { flex: 1 1 100%; display: grid; gap: 6px; }
+.done-note { flex: 1 1 100%; margin: 0; font-size: 14px; padding-inline-start: 10px; border-inline-start: 3px solid var(--refl); }
+.link-btn { all: unset; cursor: pointer; font-size: 13px; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; margin-inline-start: auto; }
+.link-btn:hover { color: #a02828; }
+.link-btn:focus-visible { outline: 2px solid var(--refl); outline-offset: 2px; }

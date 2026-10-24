@@ -11,6 +11,7 @@ import { getState, setState, useStore } from '../lib/store';
 import type { GameId, Session, SessionCard } from '../lib/types';
 import { GAMES } from '../lib/games';
 import { Journey } from './Journey';
+import { FacesJourney } from './FacesJourney';
 import { fitGrid, formOf, toUnits } from '../lib/units';
 import { useFaceImages } from '../lib/useImages';
 import { newSession } from './Home';
@@ -96,7 +97,7 @@ export function SessionPage({ id, game }: { id: string; game: GameId }) {
               סשן חדש
             </button>
             <a className="btn ghost" href={`#/${game}/history`}>
-              להיסטוריה
+              לקיר ההתחייבויות
             </a>
           </div>
         </div>
@@ -134,17 +135,20 @@ export function SessionPage({ id, game }: { id: string; game: GameId }) {
     update({ cards: s.cards.map((x) => (x.id === c.id ? { ...next, id: c.id, pair: c.pair, stage: c.stage, note: c.note } : x)) });
   };
 
-  const save = () => {
+  const save = (patch?: Partial<Session>) => {
+    // שמירה עם שינוי אחרון (שלב, תמונה) בלי לחכות לעדכון המצב
+    const cur = getState().working;
+    const next = patch ? { ...(cur?.id === s.id ? cur : s), ...patch, updatedAt: Date.now() } : cur?.id === s.id ? cur : s;
     const list = getState().sessions;
-    const exists = list.some((x) => x.id === s.id);
-    setState({ sessions: exists ? list.map((x) => (x.id === s.id ? s : x)) : [s, ...list] });
-    toast('הסשן נשמר');
+    const exists = list.some((x) => x.id === next.id);
+    setState({ working: next, sessions: exists ? list.map((x) => (x.id === next.id ? next : x)) : [next, ...list] });
+    if (!patch?.vision) toast('הסשן נשמר');
   };
 
   const discard = () =>
     confirmAction({
       title: saved ? 'לבטל את השינויים?' : 'למחוק את הטיוטה?',
-      body: saved ? 'הסשן יחזור לגרסה השמורה האחרונה.' : 'הטיוטה לא נשמרה בהיסטוריה ותימחק.',
+      body: saved ? 'הסשן יחזור לגרסה השמורה האחרונה.' : 'הטיוטה לא נשמרה בקיר ותימחק.',
       action: saved ? 'ביטול שינויים' : 'מחיקת טיוטה',
       onConfirm: () => {
         setDetails(false);
@@ -185,7 +189,7 @@ export function SessionPage({ id, game }: { id: string; game: GameId }) {
           <button className="btn ghost sm" onClick={() => go(`/${game}/present/${s.id}`)} disabled={!s.cards.length}>
             תצוגת קבוצה
           </button>
-          <button className="btn solid sm" onClick={save} disabled={!dirty}>
+          <button className="btn solid sm" onClick={() => save()} disabled={!dirty}>
             {dirty ? 'שמירה' : 'נשמר'}
           </button>
         </div>
@@ -194,7 +198,7 @@ export function SessionPage({ id, game }: { id: string; game: GameId }) {
       {/* החלונית מקבלת עמודה משלה: השולחן מצטמצם והקלפים מסתדרים מחדש, ושום קלף לא מוסתר */}
       <div className={`stage-body ${journeyForm ? 'journey-body' : ''} ${sel || details ? 'with-drawer' : ''}`}>
         {journeyForm ? (
-          <Journey s={s} update={update} onSave={save} />
+          game === 'faces' ? <FacesJourney s={s} update={update} onSave={save} /> : <Journey s={s} update={update} onSave={save} />
         ) : (
         <>
         <aside className="deck-rail" aria-label="חפיסות">

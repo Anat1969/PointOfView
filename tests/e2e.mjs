@@ -9,6 +9,9 @@ const OUT = process.env.OUT ?? 'screenshots';
 const CHROME = process.env.CHROME ?? '/opt/pw-browsers/chromium';
 mkdirSync(OUT, { recursive: true });
 const FIX = join(OUT, 'fixtures');
+const isoDay = (d) => { const t = new Date(); t.setDate(t.getDate() + d); return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`; };
+const DUE_SOON = isoDay(2);
+const DUE_LATE = isoDay(-1);
 mkdirSync(FIX, { recursive: true });
 
 let failures = 0;
@@ -80,11 +83,11 @@ writeFileSync(fakeJpg, 'broken');
 
 // ---------- דף הכלים ----------
 await page.waitForSelector('.game-box');
-ok(await count(page, '.game-box') === 2, 'suite: two tools (Faces, coaching game)');
+ok(await count(page, '.game-box') === 2, 'suite: two tools (פנים, coaching game)');
 await page.locator('.fan-card img').first().waitFor();
 await page.waitForTimeout(900);
 await page.screenshot({ path: join(OUT, '00-suite.png') });
-await page.getByRole('button', { name: 'כניסה לFaces' }).click();
+await page.getByRole('button', { name: 'כניסה לפנים' }).click();
 ok(page.url().endsWith('#/faces'), 'suite: Faces box opens the Faces game');
 
 // ---------- דף הבית של Faces, צפייה בלבד ----------
@@ -135,9 +138,12 @@ await page.waitForSelector('.game-box');
 ok(page.url().endsWith('#/'), 'brand returns to the tools page');
 await page.goto(`${BASE}/#/faces`);
 await page.getByRole('button', { name: /סשן חדש/ }).click();
-await page.getByText('השולחן ריק').waitFor();
+await page.locator('.faces-journey').waitFor();
 ok(page.url().includes('#/faces/session/'), 'session: new session route');
-ok(await page.getByRole('radio', { name: 'זוגות' }).getAttribute('aria-checked') === 'true', 'session: default form is pairs');
+ok(await page.getByRole('radio', { name: 'מסע שלוש מראות' }).getAttribute('aria-checked') === 'true', 'faces: default form is the three-mirror journey');
+await page.getByRole('radio', { name: 'זוגות' }).click();
+await page.getByText('השולחן ריק').waitFor();
+ok(true, 'faces: pairs form still available as a free table');
 await page.getByLabel('שם הסשן', { exact: true }).fill('סשן בדיקה');
 await page.getByRole('button', { name: /שליפת זוג/ }).click();
 await page.getByRole('button', { name: /שליפת זוג/ }).click();
@@ -211,7 +217,7 @@ await page.getByRole('button', { name: 'שמירה' }).click();
 await page.getByText('הסשן נשמר').waitFor();
 ok(await page.getByRole('button', { name: 'נשמר' }).isDisabled(), 'session: saved confirmation');
 
-await page.getByRole('radio', { name: 'פנים' }).click();
+await page.getByRole('radio', { name: 'פנים בלבד' }).click();
 ok(await count(page, '.mini-reflection') === 0 && await count(page, '.mini-face') === 1, 'session: faces form shows only the face deck');
 for (let i = 0; i < 70; i++) {
   const btn = page.locator('.mini-face');
@@ -255,29 +261,16 @@ await page.getByRole('link', { name: 'חזרה לסשן' }).click();
 await page.locator('.stage-bar').waitFor();
 ok(true, 'present: back to session');
 
-// ---------- היסטוריה ----------
-await page.getByRole('link', { name: 'היסטוריה' }).first().click();
-await page.locator('.history li').first().waitFor();
-await page.getByRole('button', { name: 'שכפול' }).click();
-await waitCount(page, '.history li', 2);
-ok(await page.getByText('סשן בדיקה (עותק)').isVisible(), 'history: duplicate');
-for (const [name, ext] of [['JSON', 'json'], ['CSV', 'csv'], ['ייצוא הכל JSON', 'json'], ['ייצוא הכל CSV', 'csv']]) {
-  const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name, exact: true }).first().click()]);
-  const p = join(OUT, `export.${ext}`);
-  await dl.saveAs(p);
-  const body = readFileSync(p, 'utf8');
-  ok(dl.suggestedFilename().endsWith(ext) && body.includes('סשן בדיקה'), `history: export ${name} (${dl.suggestedFilename()})`);
-  if (ext === 'csv') ok(body.includes('מבט שמזכיר לי את סבתא') && /· (שמחה|עצב|הפתעה|כעס|מחשבה|שלווה|צחוק|דאגה|חיוך עקום|עייפות)/.test(body), `history: ${name} includes notes and face names`);
-}
-await page.waitForTimeout(400);
+// ---------- קיר ההתחייבויות ----------
+await page.getByRole('link', { name: 'קיר ההתחייבויות' }).first().click();
+await page.locator('.wall li').first().waitFor();
+ok(await count(page, '.wall li') === 1, 'wall: saved session hangs on the wall');
+ok(await page.getByRole('button', { name: /שכפול|JSON|CSV/ }).count() === 0, 'wall: no duplicate or export buttons');
+await page.waitForTimeout(600);
 await page.screenshot({ path: join(OUT, '06-history.png') });
-await page.getByRole('button', { name: 'מחיקה' }).first().click();
-await page.getByRole('alertdialog').getByRole('button', { name: 'מחיקה' }).click();
-await waitCount(page, '.history li', 1);
-ok(true, 'history: delete with confirm');
-await page.getByRole('button', { name: 'פתיחה' }).click();
+await page.locator('.wall-open').first().click();
 await page.locator('.table-card').first().waitFor();
-ok((await page.getByLabel('שם הסשן', { exact: true }).inputValue()) === 'סשן בדיקה', 'history: open loads session');
+ok((await page.getByLabel('שם הסשן', { exact: true }).inputValue()) === 'סשן בדיקה', 'wall: clicking the card opens the session');
 await page.reload();
 await page.locator('.table-card img').first().waitFor();
 ok(true, 'persistence: session survives reload');
@@ -317,7 +310,7 @@ ok(await page.locator('.blind h2').innerText() === 'שלוף קלף לעמדה 3
 await page.locator('.back-card').nth(40).click();
 await waitCount(page, '.back-card', 62);
 ok(await page.locator('.back-card').first().isDisabled(), 'journey step 2: deck locked after three cards');
-ok(await count(page, '.step-btn:disabled') === 2, 'journey: steps 3 and 4 locked until the cards are flipped');
+ok(await count(page, '.step-btn:disabled') === 3, 'journey: steps 3 to 5 locked until the cards are flipped');
 const flipBefore = await page.locator('.map-flip').first().evaluate((e) => getComputedStyle(e).transform);
 await page.getByRole('button', { name: 'הפיכת הקלפים' }).click();
 await page.waitForTimeout(1800);
@@ -348,7 +341,7 @@ await page.getByRole('button', { name: 'המשך למנוף לפעולה' }).cli
 // שלב 4: כרטיס מיקוד והתחייבות
 await waitCount(page, '.focus-card', 16);
 ok((await page.locator('.insight-quote').innerText()).includes('מחויב לציפיות'), 'journey step 4: insight carried to the action step');
-await page.getByRole('button', { name: 'שמירת התהליך' }).click();
+await page.getByRole('button', { name: 'שמירה והמשך לתמונת ההתחייבות' }).click();
 await page.getByText('כדאי לבחור קודם כרטיס מיקוד').waitFor();
 ok(true, 'journey step 4: save asks for a focus card first');
 await page.locator('.focus-card').first().click();
@@ -356,15 +349,22 @@ ok((await page.locator('.commit h2').innerText()) === 'מהו הדבר הקטן 
 await page.locator('#act-what').fill('לקבוע פגישת ייעוץ של חצי שעה עם רואה חשבון');
 await page.locator('#act-when').fill('ביום ראשון ב-10:00');
 await page.locator('#act-measure').fill('הפגישה ביומן');
+await page.locator('#act-due').fill(DUE_SOON);
 ok(await count(page, '.checks .ok') === 3, 'journey step 4: concrete, measurable and time-bound all marked');
 await fitsViewport(page, 'journey action step');
 await page.screenshot({ path: join(OUT, '10d-journey-action.png') });
-await page.getByRole('button', { name: 'שמירת התהליך' }).click();
+await page.getByRole('button', { name: 'שמירה והמשך לתמונת ההתחייבות' }).click();
 await page.getByText('הסשן נשמר').waitFor();
-ok(true, 'journey: process saved');
+await page.locator('.vision-step').waitFor();
+ok(true, 'journey: process saved, step 5 opens');
+ok(await page.getByRole('button', { name: 'יצירת התמונה' }).isDisabled() && await page.getByText('יצירת תמונה זמינה במכשיר שנכנס עם מפתח עריכה').isVisible(), 'vision (viewer): image creation needs the editor key');
+ok((await page.locator('.vision-what').innerText()).includes('רואה חשבון'), 'vision: commitment shown inside the card frame');
+await page.screenshot({ path: join(OUT, '10e-journey-vision-viewer.png') });
 await page.reload();
+await page.locator('.vision-step').waitFor();
+await page.getByRole('button', { name: /04 מנוף לפעולה/ }).click();
 await page.locator('.commit').waitFor();
-ok((await page.locator('#act-when').inputValue()) === 'ביום ראשון ב-10:00', 'journey: step and commitment survive reload');
+ok((await page.locator('#act-when').inputValue()) === 'ביום ראשון ב-10:00' && (await page.locator('#act-due').inputValue()) === DUE_SOON, 'journey: step and commitment survive reload');
 await page.getByRole('radio', { name: 'חופשי' }).click();
 await page.locator('.board-grid').waitFor();
 ok(await count(page, '.table-card') === 3, 'coaching: free form shows the chosen cards on one table');
@@ -377,17 +377,13 @@ await page.keyboard.press('ArrowLeft');
 await page.waitForTimeout(900);
 await page.screenshot({ path: join(OUT, '11-coach-present.png') });
 await page.getByRole('link', { name: 'חזרה לסשן' }).click();
-await page.getByRole('link', { name: 'היסטוריה' }).click();
-await page.locator('.history li').first().waitFor();
-ok(await page.getByText('אימון בדיקה').isVisible() && !(await page.getByText('סשן בדיקה').isVisible()), 'coaching history shows only coaching sessions');
-const [cdl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'CSV', exact: true }).first().click()]);
-const cpath = join(OUT, 'coach-export.csv');
-await cdl.saveAs(cpath);
-const cbody = readFileSync(cpath, 'utf8');
-ok(cbody.includes('משחק האימון') && cbody.includes('החוסם / מה שביניהם') && cbody.includes('הפחד לאכזב את ההורים') && cbody.includes('מחויב לציפיות') && cbody.includes('הפגישה ביומן'), 'coaching export: stations, notes, insight and commitment');
+await page.getByRole('link', { name: 'קיר ההתחייבויות' }).click();
+await page.locator('.wall li').first().waitFor();
+ok(await count(page, '.wall li') === 1 && (await page.locator('.wall').innerText()).includes('אימון בדיקה'), 'coaching wall shows only coaching sessions');
+ok((await page.locator('.wall-next').innerText()).includes('רואה חשבון') && (await page.locator('.wall-next .due').innerText()) === 'עוד 2 ימים', 'wall: the next step waiting for me, with days left');
 await page.goto(`${BASE}/#/faces/history`);
-await page.locator('.history li').first().waitFor();
-ok(!(await page.getByText('אימון בדיקה').isVisible()), 'faces history does not show coaching sessions');
+await page.locator('.wall li').first().waitFor();
+ok(!(await page.locator('.wall').innerText()).includes('אימון בדיקה'), 'faces wall does not show coaching sessions');
 
 // ---------- מצב עריכה ----------
 const writesBefore = db.requests.filter((r) => !r.startsWith('GET') && !r.includes('/rpc/')).length;
@@ -494,6 +490,84 @@ await page.getByText('1 קלפים הוחזרו').waitFor();
 ok(db.faces_coach_cards.length === 67, 'coach edit: delete and restore starter card');
 await page.screenshot({ path: join(OUT, '12-coach-edit.png') });
 
+// ---------- מסע פנים: שלוש מראות, התחייבות ותמונה ----------
+db.visionImage = readFileSync(files[0]);
+await page.goto(`${BASE}/#/faces`);
+await page.getByRole('button', { name: /סשן חדש/ }).click();
+await page.locator('.faces-journey').waitFor();
+await page.getByLabel('שם הסשן', { exact: true }).fill('מסע בדיקה');
+ok(await count(page, '.step-btn') === 5 && await page.getByRole('button', { name: /02 הנחת הזוגות/ }).isDisabled(), 'faces journey: five steps, step 2 locked until a topic is set');
+await page.getByLabel('הנושא', { exact: true }).fill('איך אני נוכחת בבית אחרי העבודה');
+await page.getByRole('button', { name: 'המשך להנחת הזוגות' }).click();
+await waitCount(page, '.open-face', 66);
+ok(await count(page, '.mirror') === 3 && (await page.locator('.blind h2').innerText()).includes('מרגישות כמוך עכשיו'), 'faces journey step 2: faces open for choice, three mirrors');
+await page.waitForTimeout(1200);
+await fitsViewport(page, 'faces journey open faces');
+await page.screenshot({ path: join(OUT, '13a-faces-pairs.png') });
+for (let i = 0; i < 3; i++) {
+  await page.locator('.open-face').nth(3 + i).click();
+  await page.locator('.back-card.back-refl').first().waitFor();
+  ok(i > 0 || (await page.locator('.blind h2').innerText()).includes('שלוף השתקפות הפוכה'), 'faces journey step 2: after a face, a reflection is drawn blind');
+  await page.locator('.back-card.back-refl').nth(7 + i).click();
+  await page.waitForTimeout(300);
+}
+await page.getByRole('button', { name: 'המשך לחקירת המראות' }).waitFor();
+ok(await page.locator('.mirror .card-face.face').count() === 3 && await page.locator('.mirror .card-face.reflection').count() === 3, 'faces journey step 2: three pairs of face and reflection');
+await page.waitForTimeout(900);
+await page.screenshot({ path: join(OUT, '13b-faces-pairs-done.png') });
+await page.getByRole('button', { name: 'המשך לחקירת המראות' }).click();
+await page.locator('.station-panel').waitFor();
+ok((await page.locator('.station-panel h2').innerText()) === 'איך אני נראה מבפנים, עכשיו?', 'faces journey step 3: mirror 1 is the face of now');
+await page.getByLabel('מה עולה במראה 1').fill('עייפות שמסתירה געגוע');
+await page.getByRole('button', { name: 'למראה 2' }).click();
+await page.getByLabel('מה עולה במראה 2').fill('כעס על עצמי');
+await page.getByRole('button', { name: 'למראה 3' }).click();
+ok((await page.locator('.station-panel h2').innerText()) === 'איך ייראו הפנים שלי אחרי הצעד?', 'faces journey step 3: mirror 3 is the face I want to meet');
+await page.getByLabel('מה עולה במראה 3').fill('שקט שמגיע מהחלטה');
+await page.screenshot({ path: join(OUT, '13c-faces-mirror.png') });
+await page.getByRole('button', { name: 'בניית התובנה' }).click();
+await page.getByLabel('התובנה', { exact: true }).fill('הגעגוע הוא ההזמנה לעצור בפתח');
+await page.getByRole('button', { name: 'המשך למנוף לפעולה' }).click();
+await waitCount(page, '.companion', 3);
+await page.locator('.companion').nth(2).click();
+ok((await page.locator('.commit h2').innerText()) === 'צעד אחד, עם הפנים שאני רוצה לפגוש', 'faces journey step 4: the chosen face leads the commitment');
+await page.locator('#act-what').fill('עשר דקות בלי טלפון בכניסה הביתה');
+await page.locator('#act-when').fill('כל ערב השבוע');
+await page.locator('#act-due').fill(DUE_LATE);
+await page.locator('#act-measure').fill('סימון ביומן כל ערב');
+await fitsViewport(page, 'faces journey action step');
+await page.screenshot({ path: join(OUT, '13d-faces-action.png') });
+await page.getByRole('button', { name: 'שמירה והמשך לתמונת ההתחייבות' }).click();
+await page.locator('.vision-step').waitFor();
+ok(await page.getByRole('button', { name: 'יצירת התמונה' }).isEnabled(), 'vision (editor): image creation enabled');
+await page.getByRole('button', { name: 'יצירת התמונה' }).click();
+await page.locator('.vision-photo img').waitFor();
+ok(await page.waitForFunction(() => { const i = document.querySelector('.vision-photo img'); return i && i.complete && i.naturalWidth > 0; }, null, { timeout: 5000 }).then(() => true, () => false), 'vision: image appears inside the card frame');
+ok((await page.locator('.vision-distill').innerText()) === 'הצעד הראשון כבר מואר', 'vision: distilled sentence on the card');
+const vp = db.visions[0];
+ok(vp && vp.topic.includes('נוכחת בבית') && vp.cards.length === 6 && vp.cards.some((c) => c.mood) && vp.action.what.includes('בלי טלפון') && vp.focus === 'הפנים שאני רוצה לפגוש', 'vision: the prompt is built from the whole session (topic, pairs, moods, commitment)');
+await page.locator('.vision-prompt summary').click();
+ok((await page.locator('.vision-prompt p').innerText()).includes('Documentary realism, Professional architecture photography, 1:1'), 'vision: prompt shown and ready to copy');
+await page.waitForTimeout(1200);
+await page.screenshot({ path: join(OUT, '13e-faces-vision.png') });
+await page.getByRole('link', { name: 'קיר ההתחייבויות' }).click();
+await waitCount(page, '.wall li', 2);
+ok((await page.locator('.wall li').first().innerText()).includes('בלי טלפון') && await page.locator('.wall li').first().locator('.vision-photo img').count() === 1, 'wall: the overdue commitment comes first, with its image in the card frame');
+ok((await page.locator('.wall-next .due').innerText()) === 'המועד עבר אתמול', 'wall: overdue marked');
+await page.waitForTimeout(900);
+await page.screenshot({ path: join(OUT, '13f-wall.png') });
+await page.locator('.wall li').first().getByRole('button', { name: 'עשיתי' }).click();
+await page.getByLabel('מה קרה כשעשיתי?').fill('הבית נשמע אחרת');
+await page.getByRole('button', { name: 'סגירת המעגל' }).click();
+await page.getByText('המעגל נסגר').waitFor();
+await page.waitForTimeout(1800);
+ok(await page.locator('.vision-stamp').count() === 1 && (await page.locator('.wall li').last().innerText()).includes('הבית נשמע אחרת') && (await page.locator('.wall-meter').innerText()).includes('1 בוצעו'), 'wall: closing the loop stamps the card and moves it to the end');
+await page.screenshot({ path: join(OUT, '13g-wall-done.png') });
+await page.locator('.wall li').last().getByRole('button', { name: 'מחיקה' }).click();
+await page.getByRole('alertdialog').getByRole('button', { name: 'מחיקה' }).click();
+await waitCount(page, '.wall li', 1);
+ok(true, 'wall: delete with confirm');
+
 // ---------- ללא רשת ----------
 expectNetErrors = true;
 db.offline = true;
@@ -532,7 +606,7 @@ for (const [hash, name] of [['#/', 'suite'], ['#/faces', 'home'], ['#/faces/libr
   await noHScroll(`mobile ${name}`);
   await mp.screenshot({ path: join(OUT, `m-${name}.png`) });
 }
-const sid = JSON.parse(JSON.parse(ls)['faces.sessions']).find((x) => (x.game ?? 'faces') === 'faces').id;
+const sid = JSON.parse(JSON.parse(ls)['faces.sessions']).find((x) => (x.game ?? 'faces') === 'faces' && x.form === 'pairs').id;
 await mp.goto(`${BASE}/#/faces/session/${sid}`);
 await mp.reload();
 await mp.locator('.table-card img').first().waitFor();
@@ -559,6 +633,11 @@ await mp.screenshot({ path: join(OUT, 'm-present.png') });
 const csid = JSON.parse(JSON.parse(ls)['faces.sessions']).find((x) => x.game === 'coaching').id;
 await mp.goto(`${BASE}/#/coaching/session/${csid}`);
 await mp.reload();
+await mp.locator('.vision-step').waitFor();
+await mp.waitForTimeout(800);
+await noHScroll('mobile vision step');
+await mp.screenshot({ path: join(OUT, 'm-vision.png') });
+await mp.getByRole('button', { name: /04 מנוף לפעולה/ }).tap();
 await mp.locator('.commit').waitFor();
 await mp.waitForTimeout(800);
 await noHScroll('mobile coaching journey');

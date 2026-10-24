@@ -16,7 +16,7 @@ export function TopBar({ route }: { route: Route }) {
       : [
           { href: `#/${route.game}`, label: GAMES[route.game].name, active: route.page === 'home' || route.page === 'session' || route.page === 'present' },
           ...GAMES[route.game].libraries.map((l) => ({ href: `#/${route.game}/${l.path}`, label: l.label, active: route.page === l.path })),
-          { href: `#/${route.game}/history`, label: 'היסטוריה', active: route.page === 'history' },
+          { href: `#/${route.game}/history`, label: 'קיר ההתחייבויות', active: route.page === 'history' },
         ];
 
   return (

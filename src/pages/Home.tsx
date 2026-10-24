@@ -69,7 +69,7 @@ export function Home({ game }: { game: GameId }) {
   const all = [
     { title: 'סשן חדש', text: 'שליפה, הערה לכל קלף, ותצוגה לקבוצה.', onClick: () => newSession(game), primary: true },
     ...tiles.map((t) => ({ ...t, onClick: () => go(t.path), primary: false })),
-    { title: 'היסטוריית סשנים', text: `${sessions} סשנים שמורים`, onClick: () => go(`/${game}/history`), primary: false },
+    { title: 'קיר ההתחייבויות', text: `${sessions} התחייבויות ותמונות`, onClick: () => go(`/${game}/history`), primary: false },
   ];
 
   return (

@@ -14,7 +14,7 @@ const isGame = (g: string | undefined): g is GameId => g === 'faces' || g === 'c
 
 function parse(hash: string): Route {
   const [, a, b, c, d] = hash.replace(/^#/, '').split('/');
-  // כתובות ישנות של Faces לפני סדרת הכלים
+  // כתובות ישנות של פנים לפני סדרת הכלים
   if (a === 'session' && b) return { page: 'session', game: 'faces', id: b };
   if (a === 'present' && b) return { page: 'present', game: 'faces', id: b, index: Math.max(0, Number(c) || 0) };
   if (a === 'reflections') return { page: 'words', game: 'faces' };

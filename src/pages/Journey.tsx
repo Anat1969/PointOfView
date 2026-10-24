@@ -8,9 +8,11 @@ import { uid } from '../lib/id';
 import { useStore } from '../lib/store';
 import type { Session, SessionCard } from '../lib/types';
 import { fitGrid } from '../lib/units';
+import { COACH_STEPS as STEPS } from '../lib/facesJourney';
+import { Commit } from '../components/Commit';
+import { VisionStep } from '../components/VisionStep';
 import { useFaceImages } from '../lib/useImages';
 
-const STEPS = ['הגדרת הנושא', 'בחירה עיוורת', 'חקירת התחנות', 'מנוף לפעולה'];
 
 function useBox() {
   const [el, ref] = useState<HTMLDivElement | null>(null);
@@ -57,7 +59,7 @@ function MapCard({ card, flipped, url, active, onClick, index }: { card?: Sessio
   );
 }
 
-export function Journey({ s, update, onSave }: { s: Session; update: (p: Partial<Session>) => void; onSave: () => void }) {
+export function Journey({ s, update, onSave }: { s: Session; update: (p: Partial<Session>) => void; onSave: (patch?: Partial<Session>) => void }) {
   const coach = useStore((st) => st.coachCards);
   const urls = useFaceImages();
   const step = s.step ?? 1;
@@ -75,7 +77,7 @@ export function Journey({ s, update, onSave }: { s: Session; update: (p: Partial
   const deckFit = fitGrid(Math.max(1, backs.length), 1, deckBox.w, deckBox.h, 6, 0);
 
   const go = (n: number) => update({ step: n });
-  const canReach = (n: number) => n === 1 || (n === 2 && !!s.topic?.trim()) || (n >= 3 && flipped);
+  const canReach = (n: number) => n === 1 || (n === 2 && !!s.topic?.trim()) || (n >= 3 && n <= 4 && flipped) || (n === 5 && flipped && !!s.action?.what?.trim());
 
   const pick = (id: string) => {
     if (allChosen) return;
@@ -286,44 +288,22 @@ export function Journey({ s, update, onSave }: { s: Session; update: (p: Partial
               <div className="commit">
                 <span className="label">ההתחייבות</span>
                 <h2>{s.focus !== undefined ? FOCUS_CARDS[s.focus] : 'פעולה קונקרטית, מדידה ותחומה בזמן'}</h2>
-                <label className="label" htmlFor="act-what">
-                  מה אעשה
-                </label>
-                <div className="voice-box">
-                  <textarea id="act-what" rows={3} placeholder="למשל: אקבע פגישת ייעוץ ראשונית של חצי שעה עם רואה חשבון" value={action.what} onChange={(e) => setAction({ what: e.target.value })} />
-                  <Dictate inside label="הפעולה" onText={(t) => setAction({ what: appendText(action.what, t) })} />
-                </div>
-                <label className="label" htmlFor="act-when">
-                  מתי
-                </label>
-                <div className="voice-row">
-                  <input id="act-when" placeholder="למשל: ביום ראשון הקרוב ב-10:00" value={action.when} onChange={(e) => setAction({ when: e.target.value })} />
-                  <Dictate label="מתי" onText={(t) => setAction({ when: appendText(action.when, t) })} />
-                </div>
-                <label className="label" htmlFor="act-measure">
-                  איך אדע שעשיתי
-                </label>
-                <div className="voice-row">
-                  <input id="act-measure" placeholder="למשל: הפגישה נקבעה ביומן" value={action.measure} onChange={(e) => setAction({ measure: e.target.value })} />
-                  <Dictate label="איך אדע" onText={(t) => setAction({ measure: appendText(action.measure, t) })} />
-                </div>
-                <div className="checks" aria-label="בדיקת ההתחייבות">
-                  <span className={action.what.trim() ? 'ok' : ''}>קונקרטית</span>
-                  <span className={action.measure.trim() ? 'ok' : ''}>מדידה</span>
-                  <span className={action.when.trim() ? 'ok' : ''}>תחומה בזמן</span>
-                </div>
+                <Commit action={action} setAction={setAction} />
                 <button
                   className="btn solid"
                   onClick={() => {
                     if (s.focus === undefined) return toast('כדאי לבחור קודם כרטיס מיקוד', 'error');
-                    onSave();
+                    if (!action.what.trim()) return toast('כדאי לכתוב קודם מה תעשה', 'error');
+                    onSave({ step: 5 });
                   }}
                 >
-                  שמירת התהליך
+                  שמירה והמשך לתמונת ההתחייבות
                 </button>
               </div>
             </div>
           )}
+
+          {step === 5 && <VisionStep s={s} onSave={onSave} />}
         </motion.section>
       </AnimatePresence>
     </div>

@@ -11,6 +11,9 @@ export function createDb() {
     faces_settings: [{ id: 1, blanks: 8 }],
     faces_coach_cards: COACH_WORDS.map((word, i) => ({ id: `coach-${i + 1}`, word, image_path: null, starter: i + 1, sort: i + 1 })),
     files: new Map(),
+    visions: [],
+    visionFiles: new Map(),
+    visionImage: null,
     requests: [],
     offline: false,
   };
@@ -30,6 +33,16 @@ export async function mockSupabase(ctx, db) {
     if (db.offline) return route.fulfill({ status: 503, body: 'down' });
 
     if (url.pathname === '/rest/v1/rpc/faces_can_edit') return json(route, isEditor);
+
+    // תמונת ההתחייבות: הפונקציה האמיתית בונה פרומפט ב-Claude ומצלמת ב-fal. כאן מחזירים תמונה קבועה
+    if (url.pathname === '/functions/v1/faces-vision') {
+      if (!isEditor) return json(route, { error: 'יצירת תמונה זמינה במכשיר שנכנס עם מפתח עריכה (לוגו A&I).' }, 403);
+      const body = JSON.parse(req.postData() ?? '{}');
+      db.visions.push(body);
+      const path = `visions/${body.sessionId}-${db.visions.length}.jpg`;
+      db.visionFiles.set(path, db.visionImage);
+      return json(route, { path, distill: 'הצעד הראשון כבר מואר', prompt: 'פרומפט בדיקה, Documentary realism, Professional architecture photography, 1:1 --ar 1:1 --no text, words, writing, frame divisions', title: 'הדלת שנפתחה' });
+    }
 
     const rest = url.pathname.match(/^\/rest\/v1\/(\w+)$/);
     if (rest) {
@@ -60,7 +73,8 @@ export async function mockSupabase(ctx, db) {
     const pub = url.pathname.match(/^\/storage\/v1\/object\/public\/faces-media\/(.+)$/);
     if (pub && method === 'GET') {
       const f = db.files.get(decodeURIComponent(pub[1]));
-      return f ? route.fulfill({ status: 200, contentType: 'image/jpeg', body: f }) : route.fulfill({ status: 404, body: '' });
+      const f2 = f ?? db.visionFiles.get(decodeURIComponent(pub[1]));
+      return f2 ? route.fulfill({ status: 200, contentType: 'image/jpeg', body: f2 }) : route.fulfill({ status: 404, body: '' });
     }
     const obj = url.pathname.match(/^\/storage\/v1\/object\/faces-media(?:\/(.+))?$/);
     if (obj) {

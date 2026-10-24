@@ -16,17 +16,18 @@ export type GameConfig = {
 export const GAMES: Record<GameId, GameConfig> = {
   faces: {
     id: 'faces',
-    name: 'Faces',
-    label: 'FACES / פנים והשתקפויות',
+    name: 'פנים',
+    label: 'פנים / פנים והשתקפויות',
     tagline: 'פנים שפוגשות מילה',
     heroLines: ['פנים שפוגשות', 'מילה'],
-    about: 'שליפה אקראית של פנים והשתקפויות, הערה לכל קלף, ותצוגה מלאה לקבוצה.',
+    about: 'מסע שלוש מראות: פנים בבחירה גלויה, השתקפות בשליפה עיוורת, תובנה, התחייבות ותמונה שמניעה לפעולה.',
     forms: [
+      { id: 'journey', label: 'מסע שלוש מראות', hint: 'נושא, שלושה זוגות של פנים והשתקפות, חקירה, התחייבות ותמונה.' },
       { id: 'pairs', label: 'זוגות', hint: 'כל שליפה מניחה זוג: פנים והשתקפות.' },
-      { id: 'faces', label: 'פנים', hint: 'כל שליפה מניחה פנים אחת.' },
+      { id: 'faces', label: 'פנים בלבד', hint: 'כל שליפה מניחה פנים אחת.' },
       { id: 'free', label: 'חופשי', hint: 'שולפים פנים והשתקפויות לפי הצורך.' },
     ],
-    defaultForm: 'pairs',
+    defaultForm: 'journey',
     libraries: [
       { path: 'library', label: 'ספריית פנים' },
       { path: 'words', label: 'השתקפויות' },
@@ -40,7 +41,7 @@ export const GAMES: Record<GameId, GameConfig> = {
     heroLines: ['תמונה ומילה', 'פותחות דרך'],
     about: 'קלפים של תמונה ומילה שמחברים בין האינטואיציה לחשיבה, ומאיצים מחקר פנימי, שינוי נקודת מבט ותובנות חדשות.',
     forms: [
-      { id: 'journey', label: 'מפת שלוש תחנות', hint: 'נושא, בחירה עיוורת של שלושה קלפים, חקירת התחנות ומנוף לפעולה.' },
+      { id: 'journey', label: 'מפת שלוש תחנות', hint: 'נושא, בחירה עיוורת של שלושה קלפים, חקירת התחנות, מנוף לפעולה ותמונה.' },
       { id: 'free', label: 'חופשי', hint: 'שולפים קלפים לפי הצורך.' },
     ],
     defaultForm: 'journey',
