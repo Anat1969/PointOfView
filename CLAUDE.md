@@ -41,6 +41,7 @@
 - תמיד עומק, הנפשה ושכבות: טבעת תלת־ממדית בבית, קלפים שמתהפכים בשליפה, גלגל קלפים בתצוגת קבוצה.
 
 ## קישור ישיר מ-GitHub (בלי Vercel)
+- כלל קבוע לכל אפליקציה שנבנית או משודרגת: קישור למיזוג האחרון, בלי תלות ב-Vercel (פירוט בסקיל anat-app-builder, סעיף 8).
 - https://raw.githack.com/Anat1969/PointOfView/main/app/index.html מציג את מה שמוזג ל-main, גם כש-Vercel חסום (למשל במגבלת 100 פריסות ביום בתוכנית החינמית).
 - התיקייה app/ נבנית אוטומטית בכל מיזוג ל-main (.github/workflows/build-app.yml, `npm run build:github` עם base יחסי). vercel.json מדלג על פריסה כשרק app/ השתנה.
 - בבנייה עם base יחסי ה-service worker לא נרשם, כדי שלא יוגשו קבצים ישנים מהמטמון.
