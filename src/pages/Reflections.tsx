@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
 import { LibraryNote } from '../components/LibraryNote';
+import { Dictate } from '../components/Dictate';
 import { confirmAction, toast } from '../lib/feedback';
 import { addWords, deleteWord, renameWord, setBlanks } from '../lib/library';
 import { getState, selectEditing, useStore } from '../lib/store';
@@ -36,6 +37,13 @@ function WordTile({ w, i, canEdit }: { w: Word; i: number; canEdit: boolean }) {
             onChange={(e) => setValue(e.target.value)}
             onBlur={commit}
             onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+          />
+          <Dictate
+            label={`המילה ${w.text}`}
+            onText={(t) => {
+              setValue(t);
+              renameWord(w.id, t);
+            }}
           />
           <button
             className="btn ghost xs"
@@ -125,6 +133,7 @@ export function Reflections() {
               }}
               placeholder="למשל: אומץ, געגוע, סקרנות"
             />
+            <Dictate label="מילה חדשה" onText={(t) => (setDraft((d) => (d.trim() ? `${d.trim()}, ${t}` : t)), setError(''))} />
             <button className="btn solid" type="submit" disabled={busy || words.length >= MAX_WORDS}>
               {busy ? 'שומר...' : 'הוספה'}
             </button>

@@ -19,11 +19,27 @@ const ok = (cond, msg) => {
 const count = (p, sel) => p.locator(sel).count();
 const waitCount = (p, sel, n) => p.waitForFunction(([s, k]) => document.querySelectorAll(s).length === k, [sel, n]);
 
+
+// זיהוי דיבור מדומה: לדפדפן בבדיקה אין מיקרופון. מחזיר תמלול ביניים ואז תמלול סופי
+const fakeSpeech = () => {
+  class FakeRec {
+    start() {
+      window.__recStarts = (window.__recStarts || 0) + 1;
+      setTimeout(() => this.onresult?.({ resultIndex: 0, results: [{ isFinal: false, 0: { transcript: 'מה' } }] }), 40);
+      setTimeout(() => this.onresult?.({ resultIndex: 0, results: [{ isFinal: true, 0: { transcript: window.__say || 'מה שעלה לי מהקלף' } }] }), 120);
+    }
+    stop() { setTimeout(() => this.onend?.(), 40); }
+    abort() {}
+  }
+  window.SpeechRecognition = FakeRec;
+  window.webkitSpeechRecognition = FakeRec;
+};
 const browser = await chromium.launch({ executablePath: CHROME });
 const db = createDb();
 // ה-service worker מסתיר בקשות מהמוק, ולכן חסום כאן. ההתקנה נבדקת בנפרד עם service worker פעיל
 const ctx = await browser.newContext({ serviceWorkers: 'block', viewport: { width: 1440, height: 900 }, acceptDownloads: true, permissions: ['clipboard-read', 'clipboard-write'] });
 await mockSupabase(ctx, db);
+await ctx.addInitScript(fakeSpeech);
 const page = await ctx.newPage();
 const errors = [];
 let expectNetErrors = false;
@@ -122,7 +138,7 @@ await page.getByRole('button', { name: /סשן חדש/ }).click();
 await page.getByText('השולחן ריק').waitFor();
 ok(page.url().includes('#/faces/session/'), 'session: new session route');
 ok(await page.getByRole('radio', { name: 'זוגות' }).getAttribute('aria-checked') === 'true', 'session: default form is pairs');
-await page.getByLabel('שם הסשן').fill('סשן בדיקה');
+await page.getByLabel('שם הסשן', { exact: true }).fill('סשן בדיקה');
 await page.getByRole('button', { name: /שליפת זוג/ }).click();
 await page.getByRole('button', { name: /שליפת זוג/ }).click();
 await waitCount(page, '.table-card', 4);
@@ -139,6 +155,23 @@ ok(replaced && replaced !== firstFace, 'session: replace swaps the card');
 ok((await page.locator('.drawer textarea').inputValue()) === 'מבט שמזכיר לי את סבתא', 'session: note kept on replace');
 ok(await count(page, '.unit-pair') === 2, 'session: replaced card stays in its pair');
 ok(await page.locator('.table-card').first().locator('.note-flag').isVisible(), 'session: note flag on card');
+// הקלטה ותמלול: התמלול נכתב לתוך השדה, ונוסף לטקסט שכבר הוקלד
+await page.getByRole('button', { name: 'הקלטה להערה' }).click();
+await page.locator('.dictate-live').waitFor();
+ok(await page.locator('.dictate-live').isVisible(), 'dictation: live transcript shown while recording');
+await page.waitForTimeout(250);
+await page.getByRole('button', { name: 'סיום הקלטה להערה' }).click();
+await page.waitForFunction(() => document.querySelector('.drawer textarea').value.includes('מה שעלה לי מהקלף'));
+ok((await page.locator('.drawer textarea').inputValue()) === 'מבט שמזכיר לי את סבתא מה שעלה לי מהקלף', 'dictation: note appended after typed text');
+ok(await page.locator('.dictate-live').waitFor({ state: 'detached', timeout: 3000 }).then(() => true, () => false), 'dictation: live transcript closes after stop');
+await page.evaluate(() => (window.__say = 'סשן הקלטה'));
+await page.getByRole('button', { name: 'הקלטה לשם הסשן' }).click();
+await page.waitForTimeout(250);
+await page.getByRole('button', { name: 'סיום הקלטה לשם הסשן' }).click();
+await page.waitForFunction(() => document.querySelector('.stage-title').value === 'סשן הקלטה');
+ok(true, 'dictation: session title replaced by transcript');
+await page.getByLabel('שם הסשן', { exact: true }).fill('סשן בדיקה');
+await page.evaluate(() => (window.__say = 'מה שעלה לי מהקלף'));
 await page.locator('.drawer').getByRole('button', { name: 'סגירה' }).click();
 for (let i = 0; i < 10; i++) await page.getByRole('button', { name: /שליפת זוג/ }).click();
 await waitCount(page, '.table-card', 24);
@@ -164,6 +197,13 @@ await page.locator('.drawer').getByRole('button', { name: 'סגירה' }).click(
 await page.getByRole('button', { name: 'פרטים וסיכום' }).click();
 await page.locator('.drawer').getByRole('radio', { name: 'קבוצתי' }).click();
 await page.getByPlaceholder('משתתפים').fill('דנה, יואב');
+await page.locator('#summary').fill('תובנה: לשים לב לגעגוע');
+await page.evaluate(() => (window.__say = 'והצעד הבא'));
+await page.getByRole('button', { name: 'הקלטה לסיכום' }).click();
+await page.waitForTimeout(250);
+await page.getByRole('button', { name: 'סיום הקלטה לסיכום' }).click();
+await page.waitForFunction(() => document.querySelector('#summary').value === 'תובנה: לשים לב לגעגוע והצעד הבא');
+ok(true, 'dictation: summary appended');
 await page.locator('#summary').fill('תובנה: לשים לב לגעגוע');
 await page.screenshot({ path: join(OUT, '04b-session-details.png') });
 await page.locator('.drawer').getByRole('button', { name: 'סגירה' }).click();
@@ -237,7 +277,7 @@ await waitCount(page, '.history li', 1);
 ok(true, 'history: delete with confirm');
 await page.getByRole('button', { name: 'פתיחה' }).click();
 await page.locator('.table-card').first().waitFor();
-ok((await page.getByLabel('שם הסשן').inputValue()) === 'סשן בדיקה', 'history: open loads session');
+ok((await page.getByLabel('שם הסשן', { exact: true }).inputValue()) === 'סשן בדיקה', 'history: open loads session');
 await page.reload();
 await page.locator('.table-card img').first().waitFor();
 ok(true, 'persistence: session survives reload');
@@ -258,7 +298,7 @@ await page.locator('.lanes').waitFor();
 ok(page.url().includes('#/coaching/session/'), 'coaching: new session route');
 ok(await page.getByRole('radio', { name: 'ארבעה שלבים' }).getAttribute('aria-checked') === 'true', 'coaching: default form is four stages');
 ok(await count(page, '.lane') === 4, 'coaching: four lanes');
-await page.getByLabel('שם הסשן').fill('אימון בדיקה');
+await page.getByLabel('שם הסשן', { exact: true }).fill('אימון בדיקה');
 for (let i = 0; i < 6; i++) await page.locator('.mini-coach').click();
 await page.waitForTimeout(400);
 const perLane = await page.locator('.lane').evaluateAll((ls) => ls.map((l) => l.querySelectorAll('.table-card').length));
@@ -373,7 +413,13 @@ ok(await page.getByText('יש להזין מילה.').isVisible(), 'edit: empty i
 await page.locator('#word-input').fill('אומץ');
 await page.getByRole('button', { name: 'הוספה' }).click();
 ok(await page.getByText('המילים כבר קיימות ברשימה.').isVisible(), 'edit: duplicate guarded');
-await page.locator('#word-input').fill('ענווה');
+await page.locator('#word-input').fill('');
+await page.evaluate(() => (window.__say = 'ענווה'));
+await page.getByRole('button', { name: 'הקלטה למילה חדשה' }).click();
+await page.waitForTimeout(250);
+await page.getByRole('button', { name: 'סיום הקלטה למילה חדשה' }).click();
+await page.waitForFunction(() => document.querySelector('#word-input').value === 'ענווה');
+ok(true, 'dictation: new reflection word');
 await page.getByRole('button', { name: 'הוספה' }).click();
 await waitCount(page, '.word-tile', 50);
 ok(db.faces_words.some((w) => w.text === 'ענווה'), 'edit: add word');
@@ -425,6 +471,7 @@ await page.screenshot({ path: join(OUT, '08-home-full.png') });
 // ---------- נייד ----------
 const m = await browser.newContext({ serviceWorkers: 'block', viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
 await mockSupabase(m, db);
+await m.addInitScript(() => { delete window.SpeechRecognition; delete window.webkitSpeechRecognition; });
 const mp = await m.newPage();
 mp.on('pageerror', (e) => errors.push('mobile: ' + e.message));
 await mp.goto(BASE);
@@ -453,6 +500,9 @@ await mp.waitForTimeout(900);
 const mCovered = await mp.evaluate(() => { const d = document.querySelector('.drawer').getBoundingClientRect(); return [...document.querySelectorAll('.table-card')].filter((c) => { const r = c.getBoundingClientRect(); return r.top < d.bottom && d.top < r.bottom - 1; }).length; });
 ok(mCovered === 0, `mobile: note panel covers no card (${mCovered})`);
 await mp.screenshot({ path: join(OUT, 'm-session-note.png') });
+await mp.getByRole('button', { name: 'הקלטה להערה' }).tap();
+await mp.getByText('הדפדפן הזה לא תומך בהקלטה ותמלול').waitFor();
+ok(true, 'dictation: unsupported browser explains instead of failing');
 await mp.locator('.drawer').getByRole('button', { name: 'סגירה' }).click();
 await mp.waitForTimeout(700);
 const mInside = await mp.evaluate(() => { const b = document.querySelector('.board').getBoundingClientRect(); return [...document.querySelectorAll('.table-card')].every((c) => { const r = c.getBoundingClientRect(); return r.top >= b.top - 1 && r.bottom <= b.bottom + 1; }); });

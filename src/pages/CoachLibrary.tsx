@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRef, useState } from 'react';
 import { LibraryNote } from '../components/LibraryNote';
+import { Dictate } from '../components/Dictate';
 import { Tilt } from '../components/Tilt';
 import { COACH_COUNT } from '../lib/coach';
 import { confirmAction, toast } from '../lib/feedback';
@@ -33,13 +34,22 @@ function CardTile({ c, url, i, editing }: { c: CoachCard; url?: string; i: numbe
         {url ? <img src={url} alt="" loading="lazy" /> : <div className="skeleton" />}
         <div className="coach-band">
           {editing ? (
-            <input
-              aria-label={`עריכת המילה ${c.word}`}
-              value={word}
-              onChange={(e) => setWord(e.target.value)}
-              onBlur={commit}
-              onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
-            />
+            <>
+              <input
+                aria-label={`עריכת המילה ${c.word}`}
+                value={word}
+                onChange={(e) => setWord(e.target.value)}
+                onBlur={commit}
+                onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+              />
+              <Dictate
+                label={`המילה ${c.word}`}
+                onText={(t) => {
+                  setWord(t);
+                  renameCoachCard(c.id, t);
+                }}
+              />
+            </>
           ) : (
             <span>{c.word}</span>
           )}

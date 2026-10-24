@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
 import { CardFace } from '../components/CardFace';
 import { FlipCard } from '../components/SessionCardView';
+import { Dictate, appendText } from '../components/Dictate';
 import { drawCard, isBlank, reflectionDeck } from '../lib/deck';
 import { confirmAction, toast } from '../lib/feedback';
 import { uid } from '../lib/id';
@@ -176,7 +177,10 @@ export function SessionPage({ id, game }: { id: string; game: GameId }) {
   return (
     <div className="session-stage">
       <header className="stage-bar">
-        <input className="stage-title" aria-label="שם הסשן" value={s.title} onChange={(e) => update({ title: e.target.value })} />
+        <div className="voice-row stage-title-row">
+          <input className="stage-title" aria-label="שם הסשן" value={s.title} onChange={(e) => update({ title: e.target.value })} />
+          <Dictate label="שם הסשן" onText={(t) => update({ title: t })} />
+        </div>
         <div className="segmented" role="radiogroup" aria-label="צורת המשחק">
           {cfg.forms.map((f) => (
             <button key={f.id} role="radio" aria-checked={form === f.id} className={form === f.id ? 'on' : ''} onClick={() => update({ form: f.id })}>
@@ -311,14 +315,17 @@ export function SessionPage({ id, game }: { id: string; game: GameId }) {
                     <CardFace card={sel} url={sel.kind === 'reflection' ? undefined : urls.get(sel.refId)} />
                   </div>
                   {sel.kind === 'coach' && stagesForm && <p className="drawer-q">{STAGES[sel.stage ?? 0].question}</p>}
-                  <textarea
-                    aria-label={`הערה לקלף ${selIndex + 1}`}
-                    placeholder={isBlank(sel) ? 'המילה שנבחרה, ומה עלה ממנה' : 'מה עלה מהקלף'}
-                    value={sel.note}
-                    onChange={(e) => updateCard(sel.id, { note: e.target.value })}
-                    rows={5}
-                    autoFocus
-                  />
+                  <div className="voice-box">
+                    <textarea
+                      aria-label={`הערה לקלף ${selIndex + 1}`}
+                      placeholder={isBlank(sel) ? 'המילה שנבחרה, ומה עלה ממנה. אפשר להקליד או להקליט' : 'מה עלה מהקלף. אפשר להקליד או להקליט'}
+                      value={sel.note}
+                      onChange={(e) => updateCard(sel.id, { note: e.target.value })}
+                      rows={5}
+                      autoFocus
+                    />
+                    <Dictate inside label="הערה" onText={(t) => updateCard(sel.id, { note: appendText(sel.note, t) })} />
+                  </div>
                   <button className="btn ghost sm" onClick={() => replace(sel)}>
                     החלפת הקלף
                   </button>
@@ -333,16 +340,22 @@ export function SessionPage({ id, game }: { id: string; game: GameId }) {
                       </button>
                     ))}
                   </div>
-                  <input
-                    aria-label={s.mode === 'group' ? 'משתתפים' : 'שם המשתתף'}
-                    placeholder={s.mode === 'group' ? 'משתתפים' : 'שם המשתתף'}
-                    value={s.participants}
-                    onChange={(e) => update({ participants: e.target.value })}
-                  />
+                  <div className="voice-row">
+                    <input
+                      aria-label={s.mode === 'group' ? 'משתתפים' : 'שם המשתתף'}
+                      placeholder={s.mode === 'group' ? 'משתתפים' : 'שם המשתתף'}
+                      value={s.participants}
+                      onChange={(e) => update({ participants: e.target.value })}
+                    />
+                    <Dictate label={s.mode === "group" ? "משתתפים" : "שם המשתתף"} onText={(t) => update({ participants: appendText(s.participants, t) })} />
+                  </div>
                   <label htmlFor="summary" className="label">
                     סיכום הסשן
                   </label>
-                  <textarea id="summary" rows={6} placeholder="תובנה מרכזית, צעד הבא" value={s.summary} onChange={(e) => update({ summary: e.target.value })} />
+                  <div className="voice-box">
+                    <textarea id="summary" rows={6} placeholder="תובנה מרכזית, צעד הבא. אפשר להקליד או להקליט" value={s.summary} onChange={(e) => update({ summary: e.target.value })} />
+                    <Dictate inside label="סיכום" onText={(t) => update({ summary: appendText(s.summary, t) })} />
+                  </div>
                   {(dirty || !saved) && (
                     <button className="btn ghost sm danger-text" onClick={discard}>
                       {saved ? 'ביטול שינויים' : 'מחיקת טיוטה'}
