@@ -69,12 +69,18 @@ async function viaGemini(prompt: string, refPath: string | undefined, key: strin
   throw new Error(last);
 }
 
-/** Pollinations (flux), free and keyless */
-async function viaPollinations(prompt: string, w: number, h: number, seed: number) {
-  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt.slice(0, 1800))}?width=${w}&height=${h}&seed=${seed}&model=flux&nologo=true&enhance=false`;
+/** Pollinations, free and keyless. kontext keeps the style of a reference image from the series */
+async function viaPollinations(prompt: string, w: number, h: number, seed: number, model = "flux", refPath?: string) {
+  const ref = refPath ? `&image=${encodeURIComponent(`${SB_URL}/storage/v1/object/public/${BUCKET}/${refPath}`)}` : "";
+  const text = refPath
+    ? `Same artist, same series: keep the exact medium, brushwork, palette, lighting, background and framing of the reference image, with a new subject. ${prompt}`
+    : prompt;
+  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(text.slice(0, 1800))}?width=${w}&height=${h}&seed=${seed}&model=${model}&nologo=true&enhance=false&private=true${ref}`;
   const r = await fetch(url);
-  if (!r.ok) throw new Error(`pollinations ${r.status}`);
-  return { bytes: new Uint8Array(await r.arrayBuffer()), type: r.headers.get("content-type") ?? "image/jpeg", engine: "pollinations:flux" };
+  if (!r.ok) throw new Error(`pollinations ${model} ${r.status} ${(await r.text()).slice(0, 160)}`);
+  const type = r.headers.get("content-type") ?? "image/jpeg";
+  if (!type.startsWith("image/")) throw new Error(`pollinations ${model} returned ${type}`);
+  return { bytes: new Uint8Array(await r.arrayBuffer()), type, engine: `pollinations:${model}` };
 }
 
 async function render(body: Record<string, unknown>) {
@@ -96,6 +102,9 @@ async function render(body: Record<string, unknown>) {
   const errors: string[] = [];
   if ((engine === "auto" || engine === "gemini") && gk) {
     try { out = await viaGemini(prompt, body.ref ? String(body.ref) : undefined, gk); } catch (e) { errors.push(String(e)); }
+  }
+  if (!out && engine === "kontext") {
+    try { out = await viaPollinations(prompt, w, h, seed, "kontext", body.ref ? String(body.ref) : undefined); } catch (e) { errors.push(String(e)); }
   }
   if (!out && (engine === "auto" || engine === "pollinations")) {
     try { out = await viaPollinations(prompt, w, h, seed); } catch (e) { errors.push(String(e)); }
