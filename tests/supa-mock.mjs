@@ -71,7 +71,7 @@ export async function mockSupabase(ctx, db) {
       }
     }
 
-    const pub = url.pathname.match(/^\/storage\/v1\/object\/public\/faces-media\/(.+)$/);
+    const pub = url.pathname.match(/^\/storage\/v1\/(?:object|render\/image)\/public\/faces-media\/(.+)$/);
     if (pub && method === 'GET') {
       const f = db.files.get(decodeURIComponent(pub[1]));
       const f2 = f ?? db.visionFiles.get(decodeURIComponent(pub[1]));

@@ -1,5 +1,6 @@
 // ערכת פתיחה מקורית למשחק האימון: איורים אדריכליים־מטפוריים שנוצרים מקוד, ומילה לכל קלף
 import type { CoachCard } from './types';
+import { STARTER_ART } from './starterArt';
 
 export const COACH_COUNT = 65;
 
@@ -312,5 +313,5 @@ export function coachStarterUrl(n: number) {
 }
 
 export function coachStarterCards(): CoachCard[] {
-  return COACH_WORDS.map((word, i) => ({ id: coachId(i + 1), word, starter: i + 1, image_path: null, sort: i + 1 }));
+  return COACH_WORDS.map((word, i) => ({ id: coachId(i + 1), word, starter: i + 1, image_path: STARTER_ART[coachId(i + 1)] ?? null, sort: i + 1 }));
 }

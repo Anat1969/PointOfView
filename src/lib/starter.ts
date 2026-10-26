@@ -1,4 +1,5 @@
 // ערכת פתיחה מקורית: דיוקנאות מאוירים שנוצרים מקוד (מילות הפתיחה נזרעו ב-Supabase)
+import { STARTER_ART } from './starterArt';
 import type { Face } from './types';
 
 export const STARTER_FACE_COUNT = 60;
@@ -285,7 +286,7 @@ export function starterFaces(): Face[] {
     id: starterFaceId(i + 1),
     name: `${String(i + 1).padStart(2, '0')} · ${starterExpr(i + 1)}`,
     starter: i + 1,
-    image_path: null,
+    image_path: STARTER_ART[starterFaceId(i + 1)] ?? null,
     sort: i + 1,
   }));
 }

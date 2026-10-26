@@ -73,7 +73,7 @@ export function Faces() {
           <motion.span animate={{ width: `${(faces.length / MAX_FACES) * 100}%` }} />
         </div>
         <p className="mono">
-          {faces.length} / {MAX_FACES} · {faces.filter((f) => f.starter).length} דיוקנאות מאוירים · {faces.filter((f) => f.image_path).length} תמונות שהועלו
+          {faces.length} / {MAX_FACES} · {faces.filter((f) => f.starter).length} דיוקנאות הפתיחה · {faces.filter((f) => !f.starter && f.image_path).length} תמונות שהועלו
         </p>
         <LibraryNote />
       </header>
