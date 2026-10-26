@@ -16,7 +16,7 @@ const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const SB = { apikey: SERVICE, Authorization: `Bearer ${SERVICE}` };
 const BUCKET = "faces-media";
 const PER_HOUR = 200;
-const GEMINI_MODELS = ["gemini-2.5-flash-image", "gemini-2.5-flash-image-preview", "gemini-2.0-flash-preview-image-generation"];
+const GEMINI_MODELS = ["gemini-3.1-flash-lite-image", "gemini-3.1-flash-image", "gemini-3.1-flash-image-preview", "gemini-2.5-flash-image"];
 
 function envKey(re: RegExp): string | undefined {
   for (const n of Object.keys(Deno.env.toObject())) {
@@ -64,7 +64,7 @@ async function viaGemini(prompt: string, refPath: string | undefined, key: strin
     const img = d?.candidates?.[0]?.content?.parts?.find((p: Record<string, unknown>) => p.inline_data || p.inlineData);
     const inline = img?.inline_data ?? img?.inlineData;
     if (r.ok && inline?.data) return { bytes: fromB64(inline.data), type: inline.mime_type ?? inline.mimeType ?? "image/png", engine: `gemini:${model}` };
-    last = `${model} ${r.status} ${JSON.stringify(d?.error?.message ?? d).slice(0, 160)}`;
+    last += ` [${model} ${r.status} ${JSON.stringify(d?.error?.message ?? d?.candidates?.[0]?.finishReason ?? d).slice(0, 160)}]`;
   }
   throw new Error(last);
 }
@@ -145,6 +145,11 @@ Deno.serve(async (req) => {
       let poll = 0;
       try { poll = (await fetch("https://image.pollinations.ai/prompt/test?width=64&height=64&nologo=true")).status; } catch { poll = -1; }
       return json({ names, gemini: !!geminiKey(), pollinations: poll });
+    }
+    if (body.action === "models") {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=${geminiKey()}`);
+      const d = await r.json().catch(() => null);
+      return json({ status: r.status, models: (d?.models ?? []).map((m: { name: string }) => m.name).filter((n: string) => /image|imagen|flash/i.test(n)), error: d?.error?.message });
     }
     if (body.action === "sheet") return await sheet(body);
     if (body.action === "batch") {
