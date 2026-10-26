@@ -1,7 +1,7 @@
 // POINT OF VIEW: art for the starter decks (faces portraits and coaching card images).
 // render: paints a card from a prompt, stores it in faces-media under art/ and links it to the card.
-//   Free engines only (Anat does not pay): Gemini image with a reference image from the existing series,
-//   so the style stays one; Pollinations (flux) as a keyless fallback.
+//   Free engines only (Anat does not pay): Cloudflare Workers AI flux (free daily allowance, CF_ACCOUNT_ID + CF_API_TOKEN),
+//   Gemini image when its key has quota, Pollinations (flux) as a keyless fallback.
 // batch: renders up to 8 items one after another. sheet: a contact sheet for visual review.
 // probe: which engines are available (names only, never values).
 
@@ -69,6 +69,21 @@ async function viaGemini(prompt: string, refPath: string | undefined, key: strin
   throw new Error(last);
 }
 
+/** Cloudflare Workers AI (free daily allowance): flux schnell, the same flux family as the existing series */
+async function viaCloudflare(prompt: string, seed: number) {
+  const acct = Deno.env.get("CF_ACCOUNT_ID")?.trim(), token = Deno.env.get("CF_API_TOKEN")?.trim();
+  if (!acct || !token) throw new Error("cloudflare: CF_ACCOUNT_ID / CF_API_TOKEN missing");
+  const r = await fetch(`https://api.cloudflare.com/client/v4/accounts/${acct}/ai/run/@cf/black-forest-labs/flux-1-schnell`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt: prompt.slice(0, 2048), steps: 8, seed }),
+  });
+  const d = await r.json().catch(() => null);
+  const img = d?.result?.image;
+  if (!r.ok || !img) throw new Error(`cloudflare ${r.status} ${JSON.stringify(d?.errors ?? d).slice(0, 200)}`);
+  return { bytes: fromB64(img), type: "image/jpeg", engine: "cloudflare:flux-1-schnell" };
+}
+
 /** Pollinations, free and keyless. kontext keeps the style of a reference image from the series */
 async function viaPollinations(prompt: string, w: number, h: number, seed: number, model = "flux", refPath?: string) {
   const ref = refPath ? `&image=${encodeURIComponent(`${SB_URL}/storage/v1/object/public/${BUCKET}/${refPath}`)}` : "";
@@ -102,6 +117,9 @@ async function render(body: Record<string, unknown>) {
   const errors: string[] = [];
   if ((engine === "auto" || engine === "gemini") && gk) {
     try { out = await viaGemini(prompt, body.ref ? String(body.ref) : undefined, gk); } catch (e) { errors.push(String(e)); }
+  }
+  if (!out && (engine === "cloudflare" || (engine === "auto" && Deno.env.get("CF_API_TOKEN")))) {
+    try { out = await viaCloudflare(prompt, seed); } catch (e) { errors.push(String(e)); }
   }
   if (!out && engine === "kontext") {
     try { out = await viaPollinations(prompt, w, h, seed, "kontext", body.ref ? String(body.ref) : undefined); } catch (e) { errors.push(String(e)); }
@@ -150,7 +168,7 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({}));
     if (body.action === "probe") {
-      const names = Object.keys(Deno.env.toObject()).filter((n) => /gemini|google|genai|fal|openai|replicate|hugging|stability/i.test(n));
+      const names = Object.keys(Deno.env.toObject()).filter((n) => /gemini|google|genai|fal|openai|replicate|hugging|stability|^CF_/i.test(n));
       let poll = 0;
       try { poll = (await fetch("https://image.pollinations.ai/prompt/test?width=64&height=64&nologo=true")).status; } catch { poll = -1; }
       return json({ names, gemini: !!geminiKey(), pollinations: poll });
