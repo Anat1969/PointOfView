@@ -65,3 +65,5 @@ export const supa = createClient(SUPABASE_URL, ANON_KEY, {
 });
 
 export const publicUrl = (path: string) => `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${path}`;
+/** תמונה מוקטנת מהשרת (Supabase image transformation), לרשתות, לטבעת ולשולחן */
+export const thumbUrl = (path: string, width = 480) => `${SUPABASE_URL}/storage/v1/render/image/public/${BUCKET}/${path}?width=${width}&quality=78`;

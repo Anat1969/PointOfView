@@ -11,7 +11,7 @@ import { useFaceImages } from '../lib/useImages';
 /** תצוגת קבוצה: גלגל קלפים בעומק, הקלף הנוכחי במרכז */
 export function Present({ id, index, game }: { id: string; index: number; game: GameId }) {
   const session = useStore((s) => (s.working?.id === id ? s.working : s.sessions.find((x) => x.id === id)));
-  const urls = useFaceImages();
+  const urls = useFaceImages(true);
   const stage = useRef<HTMLDivElement>(null);
   const [showNotes, setNotes] = useState(false);
   const [isFull, setIsFull] = useState(false);

@@ -57,7 +57,8 @@ export async function deleteFace(face: Face) {
   setState({ faces: prev.filter((f) => f.id !== face.id) });
   const del = await supa.from('faces_faces').delete().eq('id', face.id);
   if (del.error) return failed(del.error);
-  if (face.image_path) await supa.storage.from(BUCKET).remove([face.image_path]);
+  // יצירות ערכת הפתיחה (art/) נשארות בדלי, כדי שהחזרת הפתיחה תחזיר אותן
+  if (face.image_path && !face.image_path.startsWith('art/')) await supa.storage.from(BUCKET).remove([face.image_path]);
   toast('הפנים נמחקו');
 }
 
@@ -136,7 +137,7 @@ export async function deleteCoachCard(card: CoachCard) {
   setState({ coachCards: getState().coachCards.filter((c) => c.id !== card.id) });
   const del = await supa.from('faces_coach_cards').delete().eq('id', card.id);
   if (del.error) return failed(del.error);
-  if (card.image_path) await supa.storage.from(BUCKET).remove([card.image_path]);
+  if (card.image_path && !card.image_path.startsWith('art/')) await supa.storage.from(BUCKET).remove([card.image_path]);
   toast('הקלף נמחק');
 }
 

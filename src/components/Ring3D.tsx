@@ -10,7 +10,7 @@ export function Ring3D({ items }: { items: RingItem[] }) {
   const tiltX = useMotionValue(-8);
   const dragging = useRef(false);
   const count = items.length;
-  const radius = Math.max(260, (count * 150) / (2 * Math.PI));
+  const radius = Math.max(280, (count * 168) / (2 * Math.PI));
   const transform = useTransform([angle, tiltX], ([a, t]: number[]) => `translateZ(-${radius}px) rotateX(${t}deg) rotateY(${a}deg)`);
 
   useEffect(() => {

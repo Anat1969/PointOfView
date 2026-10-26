@@ -2,26 +2,27 @@ import { useMemo } from 'react';
 import { coachStarterUrl } from './coach';
 import { starterUrl } from './starter';
 import { useStore } from './store';
-import { publicUrl } from './supa';
+import { publicUrl, thumbUrl } from './supa';
 import type { CoachCard, Face } from './types';
 
-export const faceUrl = (f: Face) => (f.image_path ? publicUrl(f.image_path) : f.starter ? starterUrl(`starter-${f.starter}`) : undefined);
-export const coachUrl = (c: CoachCard) => (c.image_path ? publicUrl(c.image_path) : c.starter ? coachStarterUrl(c.starter) : undefined);
+const img = (path: string, full: boolean) => (full ? publicUrl(path) : thumbUrl(path));
+export const faceUrl = (f: Face, full = false) => (f.image_path ? img(f.image_path, full) : f.starter ? starterUrl(`starter-${f.starter}`) : undefined);
+export const coachUrl = (c: CoachCard, full = false) => (c.image_path ? img(c.image_path, full) : c.starter ? coachStarterUrl(c.starter) : undefined);
 
-/** כתובות לתמונות הקלפים לפי מזהה: פנים וקלפי אימון */
-export function useFaceImages() {
+/** כתובות לתמונות הקלפים לפי מזהה: פנים וקלפי אימון. full לתצוגת הקבוצה, אחרת תמונה מוקטנת */
+export function useFaceImages(full = false) {
   const faces = useStore((s) => s.faces);
   const coach = useStore((s) => s.coachCards);
   return useMemo(() => {
     const m = new Map<string, string>();
     faces.forEach((f) => {
-      const u = faceUrl(f);
+      const u = faceUrl(f, full);
       if (u) m.set(f.id, u);
     });
     coach.forEach((c) => {
-      const u = coachUrl(c);
+      const u = coachUrl(c, full);
       if (u) m.set(c.id, u);
     });
     return m;
-  }, [faces, coach]);
+  }, [faces, coach, full]);
 }
