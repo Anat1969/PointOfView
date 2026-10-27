@@ -86,7 +86,7 @@ async function viaCloudflare(prompt: string) {
   const r = await fetch(`https://api.cloudflare.com/client/v4/accounts/${acct}/ai/run/@cf/black-forest-labs/flux-1-schnell`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt: prompt.slice(0, 2048), steps: 8 }),
+    body: JSON.stringify({ prompt: prompt.slice(0, 2048), steps: 4 }),
   });
   const d = await r.json().catch(() => null);
   const img = d?.result?.image;
