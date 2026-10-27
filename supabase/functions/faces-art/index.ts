@@ -70,13 +70,23 @@ async function viaGemini(prompt: string, refPath: string | undefined, key: strin
 }
 
 /** Cloudflare Workers AI (free daily allowance): flux schnell, the same flux family as the existing series */
-async function viaCloudflare(prompt: string, seed: number) {
-  const acct = Deno.env.get("CF_ACCOUNT_ID")?.trim(), token = Deno.env.get("CF_API_TOKEN")?.trim();
+let cfCache: Record<string, string> | null = null;
+/** CF keys: function secrets first, else the private faces_secrets table (RLS without policies, service role only) */
+async function cfKeys() {
+  if (!cfCache) {
+    cfCache = {};
+    try { for (const r of await rest("faces_secrets?select=name,value&name=like.CF_*")) cfCache[r.name] = r.value; } catch { /* none */ }
+  }
+  return { acct: Deno.env.get("CF_ACCOUNT_ID")?.trim() || cfCache.CF_ACCOUNT_ID, token: Deno.env.get("CF_API_TOKEN")?.trim() || cfCache.CF_API_TOKEN };
+}
+
+async function viaCloudflare(prompt: string) {
+  const { acct, token } = await cfKeys();
   if (!acct || !token) throw new Error("cloudflare: CF_ACCOUNT_ID / CF_API_TOKEN missing");
   const r = await fetch(`https://api.cloudflare.com/client/v4/accounts/${acct}/ai/run/@cf/black-forest-labs/flux-1-schnell`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt: prompt.slice(0, 2048), steps: 8, seed }),
+    body: JSON.stringify({ prompt: prompt.slice(0, 2048), steps: 8 }),
   });
   const d = await r.json().catch(() => null);
   const img = d?.result?.image;
@@ -118,8 +128,8 @@ async function render(body: Record<string, unknown>) {
   if ((engine === "auto" || engine === "gemini") && gk) {
     try { out = await viaGemini(prompt, body.ref ? String(body.ref) : undefined, gk); } catch (e) { errors.push(String(e)); }
   }
-  if (!out && (engine === "cloudflare" || (engine === "auto" && Deno.env.get("CF_API_TOKEN")))) {
-    try { out = await viaCloudflare(prompt, seed); } catch (e) { errors.push(String(e)); }
+  if (!out && (engine === "cloudflare" || (engine === "auto" && (await cfKeys()).token))) {
+    try { out = await viaCloudflare(prompt); } catch (e) { errors.push(String(e)); }
   }
   if (!out && engine === "kontext") {
     try { out = await viaPollinations(prompt, w, h, seed, "kontext", body.ref ? String(body.ref) : undefined); } catch (e) { errors.push(String(e)); }
@@ -171,7 +181,7 @@ Deno.serve(async (req) => {
       const names = Object.keys(Deno.env.toObject()).filter((n) => /gemini|google|genai|fal|openai|replicate|hugging|stability|^CF_/i.test(n));
       let poll = 0;
       try { poll = (await fetch("https://image.pollinations.ai/prompt/test?width=64&height=64&nologo=true")).status; } catch { poll = -1; }
-      return json({ names, gemini: !!geminiKey(), pollinations: poll });
+      return json({ names, gemini: !!geminiKey(), cloudflare: !!(await cfKeys()).token, pollinations: poll });
     }
     if (body.action === "models") {
       const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=${geminiKey()}`);
