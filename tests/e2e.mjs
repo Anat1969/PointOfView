@@ -536,8 +536,23 @@ ok(await page.waitForFunction(() => { const i = document.querySelector('.vision-
 ok((await page.locator('.vision-distill').innerText()) === 'הצעד הראשון כבר מואר', 'vision: distilled sentence on the card');
 const vp = db.visions[0];
 ok(vp && vp.topic.includes('נוכחת בבית') && vp.cards.length === 6 && vp.cards.some((c) => c.mood) && vp.action.what.includes('בלי טלפון') && vp.focus === 'הפנים שאני רוצה לפגוש', 'vision: the prompt is built from the whole session (topic, pairs, moods, commitment)');
-await page.locator('.vision-prompt summary').click();
-ok((await page.locator('.vision-prompt p').innerText()).includes('Documentary realism, Professional architecture photography, 1:1'), 'vision: prompt shown and ready to copy');
+await page.locator('.vision-prompt-text').waitFor();
+await page.getByRole('button', { name: 'העתקה באנגלית' }).waitFor();
+ok((await page.locator('.vision-prompt-text').innerText()).includes('Documentary realism, Professional architecture photography, 1:1') && await page.getByRole('button', { name: 'העתקת הפרומפט' }).isVisible() && await page.getByRole('button', { name: 'העתקה באנגלית' }).isVisible(), 'vision: prompt always shown, with copy buttons (Hebrew and English)');
+// מכסה שנגמרה: הפרומפט חוזר, התמונה הקודמת נשארת, ואין שגיאה אדומה
+const firstSrc = await page.locator('.vision-photo img').getAttribute('src');
+db.visionFail = true;
+await page.getByRole('button', { name: 'תמונה אחרת' }).click();
+await page.locator('.vision-side .status-line[role=status]').waitFor();
+ok((await page.locator('.vision-side .status-line[role=status]').innerText()).includes('הפרומפט מוכן להעתקה') && await page.locator('.vision-side .status-line.error').count() === 0 && (await page.locator('.vision-photo img').getAttribute('src')) === firstSrc && await page.locator('.vision-prompt-text').isVisible(), 'vision: when no free engine returns an image, the prompt still arrives and nothing breaks');
+db.visionFail = false;
+await page.getByRole('button', { name: 'פרומפט חדש' }).click();
+await page.waitForFunction(() => !document.querySelector('.vision-side button[disabled]'));
+ok(db.visions.at(-1).mode === 'prompt' && (await page.locator('.vision-photo img').getAttribute('src')) === firstSrc, 'vision: prompt only, without touching the image');
+// תמונה שנוצרה ידנית נכנסת למסגרת
+await page.locator('input[aria-label="העלאת תמונה משלי"]').setInputFiles(files[0]);
+await page.waitForFunction(() => (document.querySelector('.vision-photo img')?.getAttribute('src') ?? '').includes('visions/own-'), null, { timeout: 8000 }).catch(() => {});
+ok((await page.locator('.vision-photo img').getAttribute('src') ?? '').includes('visions/own-'), 'vision: my own image (made from the prompt) goes into the card frame');
 await page.waitForTimeout(1200);
 await page.screenshot({ path: join(OUT, '13e-faces-vision.png') });
 await page.getByRole('link', { name: 'קיר ההתחייבויות' }).click();

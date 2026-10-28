@@ -707,8 +707,10 @@ input:not([type]), input[type='text'], input[type='password'], textarea, .lib-no
 .vision-phases { margin: 0; padding-inline-start: 20px; display: grid; gap: 4px; font-size: 14px; color: var(--muted); }
 .vision-phases li.on { color: var(--ink); font-weight: 500; }
 .vision-phases li.done { text-decoration: line-through; }
-.vision-prompt summary { cursor: pointer; font-size: 14px; font-weight: 500; }
-.vision-prompt p { font-size: 14px; line-height: 1.55; margin: 8px 0; white-space: pre-wrap; }
+.vision-prompt { display: grid; gap: 8px; padding: 12px; background: rgba(255,255,255,.7); border: 1px solid var(--line, rgba(23,24,27,.12)); }
+.vision-prompt-distill { margin: 0; font-weight: 500; }
+.vision-prompt-text { font-size: 14px; line-height: 1.55; margin: 0; white-space: pre-wrap; max-height: 9.5em; overflow: auto; user-select: text; }
+.vision-prompt .small { font-size: 12.5px; margin: 0; }
 
 @media (max-width: 960px) {
   .vision-step { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; }
