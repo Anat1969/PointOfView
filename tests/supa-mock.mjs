@@ -1,3 +1,4 @@
+const ART_STANDIN = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN8+P9/PQAJYwPTL2CKBQAAAABJRU5ErkJggg==', 'base64');
 // מוק ל-Supabase: PostgREST, RPC ואחסון, עם בדיקת מפתח עריכה כמו ה-RLS האמיתי
 export const TEST_KEY = 'test-editor-key-1234567890';
 const EXPR = ['שמחה', 'עצב', 'הפתעה', 'כעס', 'מחשבה', 'שלווה', 'צחוק', 'דאגה', 'חיוך עקום', 'עייפות'];
@@ -75,7 +76,10 @@ export async function mockSupabase(ctx, db) {
     if (pub && method === 'GET') {
       const f = db.files.get(decodeURIComponent(pub[1]));
       const f2 = f ?? db.visionFiles.get(decodeURIComponent(pub[1]));
-      return f2 ? route.fulfill({ status: 200, contentType: 'image/jpeg', body: f2 }) : route.fulfill({ status: 404, body: '' });
+      if (f2) return route.fulfill({ status: 200, contentType: 'image/jpeg', body: f2 });
+      // the starter decks point at real art in the bucket (art/...); the mock serves a stand-in image
+      if (pub[1].startsWith('art/')) return route.fulfill({ status: 200, contentType: 'image/png', body: ART_STANDIN });
+      return route.fulfill({ status: 404, body: '' });
     }
     const obj = url.pathname.match(/^\/storage\/v1\/object\/faces-media(?:\/(.+))?$/);
     if (obj) {
