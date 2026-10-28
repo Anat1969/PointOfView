@@ -36,14 +36,18 @@ export async function mockSupabase(ctx, db) {
 
     if (url.pathname === '/rest/v1/rpc/faces_can_edit') return json(route, isEditor);
 
-    // תמונת ההתחייבות: הפונקציה האמיתית בונה פרומפט ב-Claude ומצלמת ב-fal. כאן מחזירים תמונה קבועה
+    // תמונת ההתחייבות: הפונקציה האמיתית בונה פרומפט ומצלמת במנועים חינמיים. כאן מחזירים תמונה קבועה.
+    // db.visionFail מדמה מכסה שנגמרה: הפרומפט חוזר בלי תמונה. mode 'prompt' בונה פרומפט בלבד
     if (url.pathname === '/functions/v1/faces-vision') {
       if (!isEditor) return json(route, { error: 'יצירת תמונה זמינה במכשיר שנכנס עם מפתח עריכה (לוגו A&I).' }, 403);
       const body = JSON.parse(req.postData() ?? '{}');
       db.visions.push(body);
+      const prompt = { distill: 'הצעד הראשון כבר מואר', prompt: 'פרומפט בדיקה, Documentary realism, Professional architecture photography, 1:1 --ar 1:1 --no text, words, writing, frame divisions', promptEn: 'test prompt, Documentary realism, Professional architecture photography, 1:1', title: 'הדלת שנפתחה' };
+      if (body.mode === 'prompt') return json(route, { ...prompt, path: null });
+      if (db.visionFail) return json(route, { ...prompt, path: null, imageError: 'המחוללים החינמיים לא החזירו תמונה כרגע. הפרומפט מוכן להעתקה.' });
       const path = `visions/${body.sessionId}-${db.visions.length}.jpg`;
       db.visionFiles.set(path, db.visionImage);
-      return json(route, { path, distill: 'הצעד הראשון כבר מואר', prompt: 'פרומפט בדיקה, Documentary realism, Professional architecture photography, 1:1 --ar 1:1 --no text, words, writing, frame divisions', title: 'הדלת שנפתחה' });
+      return json(route, { ...prompt, path });
     }
 
     const rest = url.pathname.match(/^\/rest\/v1\/(\w+)$/);

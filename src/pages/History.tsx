@@ -109,7 +109,7 @@ export function History({ game }: { game: GameId }) {
                     style={{ ['--tilt' as string]: `${((i % 5) - 2) * 0.8}deg` }}
                   >
                     <button type="button" className="wall-open" onClick={() => open(s)} aria-label={`פתיחת "${s.title}"`}>
-                      {s.vision ? (
+                      {s.vision?.path ? (
                         <VisionCard s={s} />
                       ) : (
                         <figure className="vision-card">

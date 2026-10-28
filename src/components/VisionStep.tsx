@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from '../lib/feedback';
 import type { Session } from '../lib/types';
-import { requestVision, visionUrl } from '../lib/vision';
+import { requestVision, uploadOwnVision, visionUrl } from '../lib/vision';
 import { dueLabel } from './Commit';
 
 const PHASES = ['קורא את הסשן', 'מזקק את התובנה', 'בונה את הפרומפט', 'מצלם את התמונה', 'שומר בקיר ההתחייבויות'];
@@ -36,12 +36,14 @@ export function VisionCard({ s, busy = false }: { s: Session; busy?: boolean }) 
 }
 
 export function VisionStep({ s, onSave }: { s: Session; onSave: (patch?: Partial<Session>) => void }) {
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<'' | 'image' | 'prompt' | 'upload'>('');
   const [phase, setPhase] = useState(0);
   const [error, setError] = useState('');
+  const [note, setNote] = useState('');
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!busy) return;
+    if (busy !== 'image') return;
     setPhase(0);
     const t = setInterval(() => setPhase((p) => Math.min(p + 1, PHASES.length - 1)), 4500);
     return () => clearInterval(t);
@@ -49,33 +51,57 @@ export function VisionStep({ s, onSave }: { s: Session; onSave: (patch?: Partial
 
   const ready = !!(s.action?.what?.trim() || s.insight?.trim());
 
-  const create = async () => {
-    setBusy(true);
+  /** פרומפט ותמונה (או פרומפט בלבד). הפרומפט נשמר תמיד, גם כשהמחולל לא החזיר תמונה */
+  const create = async (mode?: 'prompt') => {
+    setBusy(mode ?? 'image');
     setError('');
+    setNote('');
     try {
-      const v = await requestVision(s, s.vision?.prompt);
-      onSave({ vision: { path: v.path, distill: v.distill, prompt: v.prompt, title: v.title, at: Date.now() } });
-      toast('התמונה נוצרה ונשמרה בקיר ההתחייבויות');
+      const v = await requestVision(s, s.vision?.prompt, mode);
+      // תמונה קודמת נשארת כשהפעם נבנה רק פרומפט או כשהמחולל לא החזיר תמונה
+      const path = v.path ?? s.vision?.path;
+      onSave({ vision: { path: path ?? undefined, distill: v.distill, prompt: v.prompt, promptEn: v.promptEn, title: v.title, own: v.path ? false : s.vision?.own, at: Date.now() } });
+      if (v.path) toast('התמונה נוצרה ונשמרה בקיר ההתחייבויות');
+      else if (mode === 'prompt') toast('הפרומפט מוכן להעתקה');
+      else setNote(v.imageError ?? 'התמונה לא נוצרה הפעם. הפרומפט מוכן להעתקה.');
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
-      setBusy(false);
+      setBusy('');
     }
   };
 
-  const copyPrompt = async () => {
+  const copy = async (text: string | undefined, what: string) => {
     try {
-      await navigator.clipboard.writeText(s.vision?.prompt ?? '');
-      toast('הפרומפט הועתק');
+      await navigator.clipboard.writeText(text ?? '');
+      toast(`${what} הועתק`);
     } catch {
       toast('לא הצלחתי להעתיק', 'error');
+    }
+  };
+
+  /** תמונה שיצרת בעצמך מהפרומפט נכנסת למסגרת */
+  const upload = async (file?: File) => {
+    if (!file) return;
+    setBusy('upload');
+    setError('');
+    setNote('');
+    try {
+      const path = await uploadOwnVision(s, file);
+      onSave({ vision: { distill: s.vision?.distill ?? s.insight?.trim() ?? '', prompt: s.vision?.prompt ?? '', promptEn: s.vision?.promptEn, title: s.vision?.title, path, own: true, at: Date.now() } });
+      toast('התמונה שלך נכנסה למסגרת ונשמרה בקיר');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy('');
+      if (fileRef.current) fileRef.current.value = '';
     }
   };
 
   return (
     <div className="vision-step">
       <div className="vision-stage">
-        <VisionCard s={s} busy={busy} />
+        <VisionCard s={s} busy={busy === 'image' || busy === 'upload'} />
       </div>
       <div className="vision-side">
         <span className="label">שלב 5 · תמונת ההתחייבות</span>
@@ -84,7 +110,7 @@ export function VisionStep({ s, onSave }: { s: Session; onSave: (patch?: Partial
           התמונה נבנית מהסשן כולו: הנושא, הקלפים, התובנה וההתחייבות. היא מצלמת את הרגע שבו הצעד כבר נעשה, ונשמרת בקיר ההתחייבויות כדי שתפגוש אותה עד שתבצע.
         </p>
         {!ready && <p className="status-line">כדי לבנות תמונה צריך קודם התחייבות או תובנה.</p>}
-        {busy && (
+        {busy === 'image' && (
           <ol className="vision-phases" aria-live="polite">
             {PHASES.map((p, i) => (
               <li key={p} className={i < phase ? 'done' : i === phase ? 'on' : ''}>
@@ -98,19 +124,40 @@ export function VisionStep({ s, onSave }: { s: Session; onSave: (patch?: Partial
             {error}
           </p>
         )}
+        {note && (
+          <p className="status-line" role="status">
+            {note}
+          </p>
+        )}
         <div className="row wrap">
-          <button className="btn solid" onClick={create} disabled={busy || !ready}>
-            {busy ? 'יוצר...' : s.vision ? 'תמונה אחרת' : 'יצירת התמונה'}
+          <button className="btn solid" onClick={() => create()} disabled={!!busy || !ready}>
+            {busy === 'image' ? 'יוצר...' : s.vision?.path ? 'תמונה אחרת' : 'יצירת התמונה'}
           </button>
+          <button className="btn" onClick={() => create('prompt')} disabled={!!busy || !ready}>
+            {busy === 'prompt' ? 'בונה...' : s.vision?.prompt ? 'פרומפט חדש' : 'רק פרומפט'}
+          </button>
+          <button className="btn" onClick={() => fileRef.current?.click()} disabled={!!busy}>
+            {busy === 'upload' ? 'מעלה...' : 'העלאת תמונה משלי'}
+          </button>
+          <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" hidden aria-label="העלאת תמונה משלי" onChange={(e) => upload(e.target.files?.[0])} />
         </div>
         {s.vision?.prompt && (
-          <details className="vision-prompt">
-            <summary>הפרומפט שנבנה מהסשן</summary>
-            <p>{s.vision.prompt}</p>
-            <button className="btn ghost sm" onClick={copyPrompt}>
-              העתקת הפרומפט
-            </button>
-          </details>
+          <section className="vision-prompt" aria-label="הפרומפט">
+            <span className="label">הפרומפט שנבנה מהסשן</span>
+            {s.vision.distill && <p className="vision-prompt-distill">{s.vision.distill}</p>}
+            <p className="vision-prompt-text">{s.vision.prompt}</p>
+            <div className="row wrap">
+              <button className="btn sm" onClick={() => copy(s.vision?.prompt, 'הפרומפט')}>
+                העתקת הפרומפט
+              </button>
+              {s.vision.promptEn && (
+                <button className="btn ghost sm" onClick={() => copy(s.vision?.promptEn, 'הפרומפט באנגלית')}>
+                  העתקה באנגלית
+                </button>
+              )}
+            </div>
+            <p className="muted small">אפשר ליצור את התמונה בכל מחולל, ואז להעלות אותה למסגרת עם "העלאת תמונה משלי".</p>
+          </section>
         )}
       </div>
     </div>

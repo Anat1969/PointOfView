@@ -59,7 +59,8 @@ export type Session = {
   focus?: number;
   action?: { what: string; when: string; measure: string; /** תאריך יעד YYYY-MM-DD */ due?: string };
   /** תמונת ההתחייבות: נבנית מהסשן בפרומפט, ונשמרת בדלי faces-media */
-  vision?: { path: string; distill: string; prompt: string; title?: string; at: number };
+  /** תמונת ההתחייבות. path ריק כשנבנה רק פרומפט (או כשהמחולל לא החזיר תמונה). own: תמונה שהועלתה ידנית */
+  vision?: { path?: string; distill: string; prompt: string; promptEn?: string; title?: string; own?: boolean; at: number };
   /** סגירת המעגל: ההתחייבות בוצעה, ומה קרה כשעשיתי */
   done?: { at: number; note: string };
   participants: string;
