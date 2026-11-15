@@ -7,6 +7,7 @@ import type { GameId } from '../lib/types';
 import { useFaceImages } from '../lib/useImages';
 import { rise } from './Home';
 import { CLARITY_QUESTIONS, CLARITY_WORDS } from '../lib/clarity';
+import { Rich } from '../components/Rich';
 
 /** קופסת משחק בעומק: מכסה, דופן ומניפת קלפים שעולה ממנה */
 function GameBox({ game, i }: { game: GameId; i: number }) {
@@ -61,6 +62,87 @@ function GameBox({ game, i }: { game: GameId; i: number }) {
   );
 }
 
+
+/** ההבדל המקצועי בין הכלים: על איזו שאלה כל כלי עונה, איך הוא עובד, מתי לבחור בו ומה יוצא ממנו */
+const COMPARE: { game: GameId; question: string; how: string; when: string; out: string; time: string }[] = [
+  {
+    game: 'clarity',
+    question: 'מה **ברור לי עכשיו**?',
+    how: 'שלושה ערוצים שנפגשים במקרה: **מילה** שמכניסה איכות, **שאלה** שמבקשת תשובה כנה, ו**תמונה** שמדברת אל האינטואיציה. הצירוף הלא צפוי עוקף את המחשבה השגרתית.',
+    when: 'פתיחת מפגש או צ׳ק־אין, רגע של בלבול, החלטה קטנה, או כשרוצים **תובנה אחת מהירה** לפני עבודה עמוקה.',
+    out: 'משפט בהירות אחד וצעד קטן.',
+    time: '10 עד 20 דקות',
+  },
+  {
+    game: 'faces',
+    question: 'מה **אני מרגיש**, ומה מסתתר מאחורי זה?',
+    how: 'עבודה **השלכתית**: מזהים את עצמנו בפנים של אחרים, והשתקפות במילה שנשלפת בעיוורון נותנת לרגש **שם ומשמעות**. שלוש מראות: הפנים של עכשיו, הפנים שמסתתרות, והפנים שרוצים לפגוש.',
+    when: 'כשהנושא **רגשי או זהותי**: יחסים, דימוי עצמי, אובדן, כעס, או כשקשה לנסח במילים מה מרגישים.',
+    out: 'מודעות רגשית, שפה לרגש, וצעד שנולד מבפנים.',
+    time: '30 עד 45 דקות',
+  },
+  {
+    game: 'coaching',
+    question: 'מה **עוצר אותי** בדרך למטרה?',
+    how: 'עבודה **מערכתית** על פער: מפת שלוש תחנות של אני, **החוסם** והמצב הרצוי. קלפי תמונה ומילה נשלפים בעיוורון, ומשמשים מטאפורה לכל תחנה עד שהחוסם נראה כגשר.',
+    when: 'כשיש **מטרה ותקיעות**: קונפליקט עם אדם אחר, החלטה מקצועית, שינוי שלא מצליח לקרות.',
+    out: 'הבנת החסם, כרטיס מיקוד ו**מנוף לפעולה** מדיד ותחום בזמן.',
+    time: '45 עד 60 דקות',
+  },
+];
+
+function Compare() {
+  return (
+    <motion.section className="compare" aria-labelledby="compare-title" {...rise(4)}>
+      <span className="label">איזה כלי מתאים לך</span>
+      <h2 id="compare-title">
+        <Rich text="שלושה כלים, **שלוש שאלות שונות**" />
+      </h2>
+      <p className="lead">
+        <Rich text="כל הכלים עובדים עם תמונות ומילים, וכולם נגמרים ב**התחייבות ובתמונה** שמניעה לפעולה. ההבדל הוא **על איזו שאלה** הכלי עונה, ובאיזה עומק." />
+      </p>
+      <div className="compare-grid">
+        {COMPARE.map((c) => (
+          <article key={c.game} className={`compare-card cmp-${c.game}`}>
+            <header>
+              <span className="label">{GAMES[c.game].tagline}</span>
+              <h3>{GAMES[c.game].name}</h3>
+              <p className="compare-q">
+                <Rich text={c.question} />
+              </p>
+            </header>
+            <dl>
+              <dt>איך זה עובד</dt>
+              <dd>
+                <Rich text={c.how} />
+              </dd>
+              <dt>מתי לבחור בו</dt>
+              <dd>
+                <Rich text={c.when} />
+              </dd>
+              <dt>מה יוצא ממנו</dt>
+              <dd>
+                <Rich text={c.out} />
+              </dd>
+              <dt>משך משוער</dt>
+              <dd className="mono">{c.time}</dd>
+            </dl>
+            <button className="btn solid" onClick={() => go(`/${c.game}`)}>
+              פתיחת {GAMES[c.game].name}
+            </button>
+          </article>
+        ))}
+      </div>
+      <div className="compare-path">
+        <span className="label">דרך עבודה מומלצת</span>
+        <p>
+          <Rich text="מתחילים ב**רגע בהירות** כדי למצוא כיוון. אם עולה רגש, ממשיכים ל**פנים**. אם מתבררת מטרה ויש פער, ממשיכים ל**משחק האימון**. אפשר לעבוד עם כלי אחד או לשלב כמה כלים במפגש אחד." />
+        </p>
+      </div>
+    </motion.section>
+  );
+}
+
 /** דף הכלים של הסדרה: כל משחק עומד בפני עצמו */
 export function Suite() {
   return (
@@ -79,6 +161,7 @@ export function Suite() {
           <GameBox key={g} game={g} i={i} />
         ))}
       </section>
+      <Compare />
     </div>
   );
 }

@@ -84,6 +84,14 @@ writeFileSync(fakeJpg, 'broken');
 // ---------- דף הכלים ----------
 await page.waitForSelector('.game-box');
 ok(await count(page, '.game-box') === 3, 'suite: three tools (פנים, coaching game, רגע בהירות)');
+ok(await count(page, '.compare-card') === 3 && (await page.locator('.compare-path').innerText()).includes('רגע בהירות') && await page.locator('.compare mark.hl').count() >= 6, 'suite: a professional comparison of the three tools, with a recommended path');
+await page.locator('.compare').scrollIntoViewIfNeeded();
+await page.waitForTimeout(600);
+await page.screenshot({ path: join(OUT, '00b-suite-compare.png'), fullPage: true });
+await page.getByRole('button', { name: 'פתיחת משחק האימון' }).click();
+ok(page.url().endsWith('#/coaching'), 'suite: each comparison card opens its tool');
+await page.goto(`${BASE}/#/`);
+await page.waitForSelector('.game-box');
 await page.locator('.fan-card img').first().waitFor();
 await page.waitForTimeout(900);
 await page.screenshot({ path: join(OUT, '00-suite.png') });
