@@ -12,9 +12,11 @@ import type { GameId, Session, SessionCard } from '../lib/types';
 import { GAMES } from '../lib/games';
 import { Journey } from './Journey';
 import { FacesJourney } from './FacesJourney';
+import { ClarityJourney } from './ClarityJourney';
 import { fitGrid, formOf, toUnits } from '../lib/units';
 import { useFaceImages } from '../lib/useImages';
 import { newSession } from './Home';
+import { CLARITY_QUESTIONS, CLARITY_WORDS } from '../lib/clarity';
 
 
 const INNER = 8;
@@ -33,7 +35,7 @@ function useBox<T extends HTMLElement>() {
   return [ref, box] as const;
 }
 
-function MiniDeck({ kind, label, left, onDraw }: { kind: 'face' | 'reflection' | 'pair' | 'coach'; label: string; left: number; onDraw: () => void }) {
+function MiniDeck({ kind, label, left, onDraw }: { kind: 'face' | 'reflection' | 'pair' | 'coach' | 'word' | 'question' | 'photo'; label: string; left: number; onDraw: () => void }) {
   const empty = left <= 0;
   return (
     <motion.button
@@ -198,7 +200,7 @@ export function SessionPage({ id, game }: { id: string; game: GameId }) {
       {/* החלונית מקבלת עמודה משלה: השולחן מצטמצם והקלפים מסתדרים מחדש, ושום קלף לא מוסתר */}
       <div className={`stage-body ${journeyForm ? 'journey-body' : ''} ${sel || details ? 'with-drawer' : ''}`}>
         {journeyForm ? (
-          game === 'faces' ? <FacesJourney s={s} update={update} onSave={save} /> : <Journey s={s} update={update} onSave={save} />
+          game === 'faces' ? <FacesJourney s={s} update={update} onSave={save} /> : game === 'clarity' ? <ClarityJourney s={s} update={update} onSave={save} /> : <Journey s={s} update={update} onSave={save} />
         ) : (
         <>
         <aside className="deck-rail" aria-label="חפיסות">
@@ -210,6 +212,12 @@ export function SessionPage({ id, game }: { id: string; game: GameId }) {
               {(!faces.length || (form !== 'faces' && !reflLeft && !s.cards.some((c) => c.kind === 'reflection'))) && (
                 <p className="rail-hint">הספרייה עוד נטענת, או שהיא ריקה.</p>
               )}
+            </>
+          ) : game === 'clarity' ? (
+            <>
+              <MiniDeck kind="word" label="שליפת מילה" left={CLARITY_WORDS.length - s.cards.filter((c) => c.kind === 'word').length} onDraw={() => draw(['word'])} />
+              <MiniDeck kind="question" label="שליפת שאלה" left={CLARITY_QUESTIONS.length - s.cards.filter((c) => c.kind === 'question').length} onDraw={() => draw(['question'])} />
+              <MiniDeck kind="photo" label="שליפת תמונה" left={coach.length - s.cards.filter((c) => c.kind === 'photo').length} onDraw={() => draw(['photo'])} />
             </>
           ) : (
             <>
@@ -241,9 +249,9 @@ export function SessionPage({ id, game }: { id: string; game: GameId }) {
                           key={c.id}
                           className={`table-card ${selected === c.id ? 'selected' : ''}`}
                           onClick={() => (setSelected(c.id), setDetails(false))}
-                          aria-label={`קלף ${i + 1}, ${c.kind === 'face' ? 'פנים' : isBlank(c) ? 'קלף ריק' : c.text}. פתיחת הערה`}
+                          aria-label={`קלף ${i + 1}, ${c.kind === 'face' ? 'פנים' : c.kind === 'photo' ? 'תמונה' : isBlank(c) ? 'קלף ריק' : c.text}. פתיחת הערה`}
                         >
-                          <FlipCard key={c.refId} card={c} url={c.kind === 'reflection' ? undefined : urls.get(c.refId)} index={i} />
+                          <FlipCard key={c.refId} card={c} url={c.kind === 'reflection' || c.kind === 'word' || c.kind === 'question' ? undefined : urls.get(c.refId)} index={i} />
                         </button>
                       );
                     })}

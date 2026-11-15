@@ -10,7 +10,7 @@ export type Route =
   | { page: 'session'; game: GameId; id: string }
   | { page: 'present'; game: GameId; id: string; index: number };
 
-const isGame = (g: string | undefined): g is GameId => g === 'faces' || g === 'coaching';
+const isGame = (g: string | undefined): g is GameId => g === 'faces' || g === 'coaching' || g === 'clarity';
 
 function parse(hash: string): Route {
   const [, a, b, c, d] = hash.replace(/^#/, '').split('/');

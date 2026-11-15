@@ -19,11 +19,12 @@ export type CoachCard = {
   sort?: number;
 };
 
-export type GameId = 'faces' | 'coaching';
+export type GameId = 'faces' | 'coaching' | 'clarity';
 
 export type Reflections = { words: Word[]; blanks: number };
 
-export type CardKind = 'face' | 'reflection' | 'coach';
+/** word, question ו-photo שייכים לרגע בהירות: מילה, שאלה ותמונה (התמונה מקלפי האימון, בלי המילה) */
+export type CardKind = 'face' | 'reflection' | 'coach' | 'word' | 'question' | 'photo';
 
 export type SessionCard = {
   id: string;

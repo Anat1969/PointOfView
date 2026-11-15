@@ -11,6 +11,7 @@ import { fitGrid } from '../lib/units';
 import { COACH_STEPS as STEPS } from '../lib/facesJourney';
 import { Commit } from '../components/Commit';
 import { VisionStep } from '../components/VisionStep';
+import { Rich } from '../components/Rich';
 import { useFaceImages } from '../lib/useImages';
 
 
@@ -210,8 +211,12 @@ export function Journey({ s, update, onSave }: { s: Session; update: (p: Partial
                     <span className="label">
                       תחנה {station + 1} · {STATIONS[station].name}
                     </span>
-                    <h2>{STATIONS[station].title}</h2>
-                    <p className="muted">{STATIONS[station].explain}</p>
+                    <h2>
+                      <Rich text={STATIONS[station].title} />
+                    </h2>
+                    <p className="muted">
+                      <Rich text={STATIONS[station].explain} />
+                    </p>
                     <ul className="questions">
                       {STATIONS[station].questions.map((q) => (
                         <li key={q}>{q}</li>
@@ -266,7 +271,11 @@ export function Journey({ s, update, onSave }: { s: Session; update: (p: Partial
             <div className="lever">
               <div className="lever-cards">
                 <span className="label">שלב 4 · מנוף לפעולה</span>
-                {s.insight && <blockquote className="insight-quote">{s.insight}</blockquote>}
+                {s.insight && (
+                  <blockquote className="insight-quote">
+                    <mark className="hl">{s.insight}</mark>
+                  </blockquote>
+                )}
                 <h2>בחר כרטיס מיקוד אחד</h2>
                 <div className="focus-grid" role="radiogroup" aria-label="כרטיסי מיקוד">
                   {FOCUS_CARDS.map((q, i) => (

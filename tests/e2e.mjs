@@ -83,7 +83,7 @@ writeFileSync(fakeJpg, 'broken');
 
 // ---------- דף הכלים ----------
 await page.waitForSelector('.game-box');
-ok(await count(page, '.game-box') === 2, 'suite: two tools (פנים, coaching game)');
+ok(await count(page, '.game-box') === 3, 'suite: three tools (פנים, coaching game, רגע בהירות)');
 await page.locator('.fan-card img').first().waitFor();
 await page.waitForTimeout(900);
 await page.screenshot({ path: join(OUT, '00-suite.png') });
@@ -573,6 +573,74 @@ await page.getByRole('alertdialog').getByRole('button', { name: 'מחיקה' }).
 await waitCount(page, '.wall li', 1);
 ok(true, 'wall: delete with confirm');
 
+// ---------- רגע בהירות: מילה, שאלה ותמונה ----------
+await page.goto(`${BASE}/#/`);
+await page.getByRole('button', { name: 'כניסה לרגע בהירות' }).click();
+await page.locator('.hero').waitFor();
+ok(page.url().endsWith('#/clarity') && (await page.locator('.hero p').innerText()).includes('מילה') && await page.locator('.hero p mark.hl').count() >= 3, 'clarity: own home, key words highlighted');
+await page.waitForTimeout(900);
+await page.screenshot({ path: join(OUT, '14a-clarity-home.png') });
+await page.getByRole('button', { name: /סשן חדש/ }).click();
+await page.locator('.journey.clarity').waitFor();
+ok(page.url().includes('#/clarity/session/') && await page.getByRole('radio', { name: 'שלישייה' }).getAttribute('aria-checked') === 'true', 'clarity: new session opens the triad journey');
+ok(await page.getByRole('button', { name: /02 שליפת השלישייה/ }).isDisabled(), 'clarity: step 2 locked until the question is written');
+await page.getByLabel('השאלה שאיתה באתי', { exact: true }).fill('האם לעזוב את העבודה');
+await page.getByRole('button', { name: 'המשך לשליפת השלישייה' }).click();
+await page.locator('.triad').waitFor();
+await page.screenshot({ path: join(OUT, '14b-clarity-piles.png') });
+for (const name of ['מילה: שליפה', 'שאלה: שליפה', 'תמונה: שליפה']) await page.getByRole('button', { name }).click();
+await page.getByRole('button', { name: 'הפיכת השלישייה' }).click();
+await page.waitForTimeout(1600);
+const triad = await page.evaluate(() => [...document.querySelectorAll('.triad .map-front .card-face')].map((c) => c.className.split(' ')[1] + ':' + (c.querySelector('.clarity-text')?.textContent ?? (c.querySelector('img') ? 'img' : ''))));
+ok(triad.length === 3 && triad[0].startsWith('word:') && triad[0].length > 6 && triad[1].startsWith('question:') && triad[1].includes('?') && triad[2] === 'photo:img', `clarity: a word, a question and an image are drawn blind and flipped together (${triad.join(' | ')})`);
+await page.screenshot({ path: join(OUT, '14c-clarity-triad.png') });
+await page.getByRole('button', { name: 'המשך לרגע הבהירות' }).click();
+await page.locator('.station-panel').waitFor();
+ok(await page.locator('.station-panel .clarity-quote').count() === 1 && await page.locator('.station-panel h2 mark.hl').count() === 1, 'clarity: the word in large display type, the key phrase marked');
+await page.getByLabel('מה עולה מהמילה').fill('אני צריכה אומץ');
+await page.getByRole('button', { name: 'לשאלה' }).click();
+await page.getByLabel('מה עולה מהשאלה').fill('שאני כבר יודעת');
+await page.getByRole('button', { name: 'לתמונה' }).click();
+await page.getByLabel('מה עולה מהתמונה').fill('דלת פתוחה');
+await page.getByRole('button', { name: 'לרגע הבהירות', exact: true }).click();
+await page.getByLabel('רגע הבהירות', { exact: true }).fill('אני לא מפחדת לעזוב, אני מפחדת לא לדעת מי אני בלי התואר');
+ok(await page.locator('.clarity-moment mark.hl').count() === 1, 'clarity: the moment of clarity is highlighted as it is written');
+await page.screenshot({ path: join(OUT, '14d-clarity-moment.png') });
+await page.getByRole('button', { name: 'המשך לצעד אחד' }).click();
+await page.locator('#act-what').fill('לכתוב שלושה דברים שאני בלי התואר');
+await page.locator('#act-when').fill('ביום חמישי בערב');
+await page.locator('#act-measure').fill('רשימה בטלפון');
+await page.screenshot({ path: join(OUT, '14e-clarity-step.png') });
+await page.getByRole('button', { name: 'שמירה והמשך לתמונת ההתחייבות' }).click();
+await page.locator('.vision-step').waitFor();
+await page.getByRole('button', { name: 'יצירת התמונה' }).click();
+await page.locator('.vision-photo img').waitFor();
+const cv = db.visions.at(-1);
+ok(cv.game === 'clarity' && cv.cards.length === 3 && cv.cards.map((c) => c.kind).join(',') === 'מילה,שאלה,תמונה' && cv.topic.includes('לעזוב'), 'clarity: the commitment image is built from the triad and the question');
+await page.waitForTimeout(1000);
+await page.screenshot({ path: join(OUT, '14f-clarity-vision.png') });
+await page.getByRole('link', { name: 'קיר ההתחייבויות' }).click();
+await waitCount(page, '.wall li', 1);
+ok((await page.locator('.wall li').first().innerText()).includes('שלושה דברים'), 'clarity: own commitment wall');
+// חופשי: שלוש חפיסות
+await page.getByRole('link', { name: 'רגע בהירות' }).first().click();
+await page.getByRole('button', { name: /סשן חדש/ }).click();
+await page.getByRole('radio', { name: 'חופשי' }).click();
+for (const l of ['שליפת מילה', 'שליפת שאלה', 'שליפת תמונה']) await page.getByRole('button', { name: new RegExp(l) }).click();
+await waitCount(page, '.table-card', 3);
+await page.waitForTimeout(900);
+await fitsViewport(page, 'clarity free form');
+await page.screenshot({ path: join(OUT, '14g-clarity-free.png') });
+await page.goto(`${BASE}/#/clarity/library`);
+await waitCount(page, '.clarity-tile.word', 60);
+await page.getByRole('tab', { name: /שאלות/ }).click();
+await waitCount(page, '.clarity-tile.question', 60);
+await page.getByRole('tab', { name: /תמונות/ }).click();
+await page.waitForFunction(() => document.querySelectorAll('.clarity-tile.photo').length >= 65);
+ok(await count(page, '.clarity-tile.photo') === db.faces_coach_cards.length, 'clarity library: 60 original words, 60 original questions, and every image from the coaching collection');
+await page.waitForTimeout(700);
+await page.screenshot({ path: join(OUT, '14h-clarity-library.png') });
+
 // ---------- ללא רשת ----------
 expectNetErrors = true;
 db.offline = true;
@@ -604,7 +672,7 @@ const noHScroll = async (label) => {
   const w = await mp.evaluate(() => [document.documentElement.scrollWidth, window.innerWidth]);
   ok(w[0] <= w[1] && w[1] === 390, `${label}: no horizontal scroll (${w[0]} <= ${w[1]})`);
 };
-for (const [hash, name] of [['#/', 'suite'], ['#/faces', 'home'], ['#/faces/library', 'faces'], ['#/faces/words', 'reflections'], ['#/faces/history', 'history'], ['#/coaching', 'coach-home'], ['#/coaching/library', 'coach-library']]) {
+for (const [hash, name] of [['#/', 'suite'], ['#/faces', 'home'], ['#/faces/library', 'faces'], ['#/faces/words', 'reflections'], ['#/faces/history', 'history'], ['#/coaching', 'coach-home'], ['#/coaching/library', 'coach-library'], ['#/clarity', 'clarity-home'], ['#/clarity/library', 'clarity-library']]) {
   await mp.goto(BASE + '/' + hash);
   await mp.reload();
   await mp.waitForTimeout(1000);
@@ -654,6 +722,19 @@ await mp.locator('.station-panel').waitFor();
 await mp.waitForTimeout(600);
 await noHScroll('mobile coaching stations');
 await mp.screenshot({ path: join(OUT, 'm-coach-stations.png') });
+const clsid = JSON.parse(JSON.parse(ls)['faces.sessions']).find((x) => x.game === 'clarity' && x.step === 5)?.id;
+await mp.goto(`${BASE}/#/clarity/session/${clsid}`);
+await mp.reload();
+await mp.getByRole('button', { name: /02 שליפת השלישייה/ }).tap();
+await mp.locator('.triad').waitFor();
+await mp.waitForTimeout(1000);
+await noHScroll('mobile clarity triad');
+await mp.screenshot({ path: join(OUT, 'm-clarity-triad.png') });
+await mp.getByRole('button', { name: /03 רגע הבהירות/ }).tap();
+await mp.locator('.station-panel').waitFor();
+await mp.waitForTimeout(700);
+await noHScroll('mobile clarity moment');
+await mp.screenshot({ path: join(OUT, 'm-clarity-moment.png') });
 await mp.goto(`${BASE}/#/faces/present/${sid}`);
 await mp.waitForTimeout(600);
 await mp.getByRole('button', { name: 'תפריט', exact: true }).tap();

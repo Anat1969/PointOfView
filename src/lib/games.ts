@@ -47,6 +47,20 @@ export const GAMES: Record<GameId, GameConfig> = {
     defaultForm: 'journey',
     libraries: [{ path: 'library', label: 'ספריית קלפים' }],
   },
+  clarity: {
+    id: 'clarity',
+    name: 'רגע בהירות',
+    label: 'WORD · QUESTION · IMAGE / מילה, שאלה ותמונה',
+    tagline: 'מילה, שאלה ותמונה שמאירות רגע',
+    heroLines: ['מילה, שאלה ותמונה.', 'רגע של בהירות'],
+    about: 'שולפים שלישייה: **מילה** שפותחת איכות, **שאלה** שמזמינה תשובה כנה, ו**תמונה** שמראה את מה שעוד לא נאמר. מהשלושה נולד **רגע של בהירות**, צעד אחד ותמונה שמניעה לפעולה.',
+    forms: [
+      { id: 'journey', label: 'שלישייה', hint: 'השאלה שאיתה באתי, שליפת מילה, שאלה ותמונה, רגע הבהירות, צעד אחד ותמונה.' },
+      { id: 'free', label: 'חופשי', hint: 'שולפים מילים, שאלות ותמונות לפי הצורך.' },
+    ],
+    defaultForm: 'journey',
+    libraries: [{ path: 'library', label: 'החפיסות' }],
+  },
 };
 
 export const GAME_IDS = Object.keys(GAMES) as GameId[];

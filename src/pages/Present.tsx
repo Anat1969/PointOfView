@@ -116,7 +116,7 @@ export function Present({ id, index, game }: { id: string; index: number; game: 
               style={{ zIndex: 50 - Math.abs(d) }}
             >
               {u.cards.map((c) => (
-                <CardFace key={c.id} card={c} url={c.kind === 'reflection' ? undefined : urls.get(c.refId)} big />
+                <CardFace key={c.id} card={c} url={c.kind === 'reflection' || c.kind === 'word' || c.kind === 'question' ? undefined : urls.get(c.refId)} big />
               ))}
               {u.stage !== undefined && stationName(session, u.stage) && <span className="stage-chip">{stationName(session, u.stage)}</span>}
             </motion.button>

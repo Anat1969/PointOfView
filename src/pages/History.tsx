@@ -96,7 +96,7 @@ export function History({ game }: { game: GameId }) {
             <AnimatePresence>
               {sessions.map((s, i) => {
                 const n = daysLeft(s.action?.due);
-                const cards = s.cards.filter((c) => c.kind !== 'reflection').slice(0, 3);
+                const cards = s.cards.filter((c) => c.kind === 'face' || c.kind === 'coach' || c.kind === 'photo').slice(0, 3);
                 return (
                   <motion.li
                     key={s.id}
