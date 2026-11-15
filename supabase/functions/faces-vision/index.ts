@@ -78,7 +78,11 @@ const fromB64 = (b: string) => Uint8Array.from(atob(b), (c) => c.charCodeAt(0));
 const clip = (v: unknown, n: number) => String(v ?? "").slice(0, n).trim();
 
 function describe(b: Record<string, unknown>) {
-  const game = b.game === "coaching" ? "משחק האימון (קלפי תמונה ומילה, מפת שלוש תחנות)" : "פנים (קלפי פנים וקלפי השתקפות במילה, בזוגות)";
+  const game = b.game === "coaching"
+    ? "משחק האימון (קלפי תמונה ומילה, מפת שלוש תחנות)"
+    : b.game === "clarity"
+      ? "רגע בהירות (שלישייה: מילה, שאלה ותמונה, שמתוכן נולד רגע של בהירות)"
+      : "פנים (קלפי פנים וקלפי השתקפות במילה, בזוגות)";
   const cards = Array.isArray(b.cards) ? b.cards.slice(0, 9) : [];
   const lines = cards.map((c: Record<string, unknown>) =>
     `- ${clip(c.position, 60)}: ${clip(c.kind, 20)}${c.word ? ` "${clip(c.word, 40)}"` : ""}${c.mood ? `, הבעת הפנים: ${clip(c.mood, 60)}` : ""}${c.note ? `. מה עלה: ${clip(c.note, 400)}` : ""}`
@@ -300,7 +304,7 @@ Deno.serve(async (req) => {
       method: "POST",
       body: JSON.stringify({
         session_id: sessionId,
-        game: body.game === "coaching" ? "coaching" : "faces",
+        game: ["coaching", "clarity"].includes(body.game) ? body.game : "faces",
         distill: out.distill,
         prompt_he: out.prompt_he,
         prompt_en: out.prompt_en,

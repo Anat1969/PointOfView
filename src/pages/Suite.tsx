@@ -6,6 +6,7 @@ import { useStore } from '../lib/store';
 import type { GameId } from '../lib/types';
 import { useFaceImages } from '../lib/useImages';
 import { rise } from './Home';
+import { CLARITY_QUESTIONS, CLARITY_WORDS } from '../lib/clarity';
 
 /** קופסת משחק בעומק: מכסה, דופן ומניפת קלפים שעולה ממנה */
 function GameBox({ game, i }: { game: GameId; i: number }) {
@@ -19,8 +20,17 @@ function GameBox({ game, i }: { game: GameId; i: number }) {
   const fan: Fan[] =
     game === 'faces'
       ? [...faces.slice(0, 3).map((f) => ({ key: f.id, url: urls.get(f.id) })), ...words.slice(0, 2).map((w) => ({ key: w.id, word: w.text }))]
-      : coach.slice(0, 5).map((c) => ({ key: c.id, url: urls.get(c.id), caption: c.word }));
-  const count = game === 'faces' ? `${faces.length} פנים · ${words.length} מילים` : `${coach.length} קלפים`;
+      : game === 'clarity'
+        ? [
+            { key: 'w', word: CLARITY_WORDS[0] },
+            { key: 'p1', url: coach[9] ? urls.get(coach[9].id) : undefined },
+            { key: 'q', word: CLARITY_QUESTIONS[0] },
+            { key: 'p2', url: coach[22] ? urls.get(coach[22].id) : undefined },
+            { key: 'w2', word: CLARITY_WORDS[14] },
+          ]
+        : coach.slice(0, 5).map((c) => ({ key: c.id, url: urls.get(c.id), caption: c.word }));
+  const count =
+    game === 'faces' ? `${faces.length} פנים · ${words.length} מילים` : game === 'clarity' ? `${CLARITY_WORDS.length} מילים · ${CLARITY_QUESTIONS.length} שאלות · ${coach.length} תמונות` : `${coach.length} קלפים`;
 
   return (
     <motion.div className="box-wrap" {...rise(i + 1)}>

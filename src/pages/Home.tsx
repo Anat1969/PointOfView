@@ -9,6 +9,8 @@ import { uid } from '../lib/id';
 import type { GameId, Session } from '../lib/types';
 import { MAX_COACH, MAX_FACES, MAX_REFLECTIONS } from '../lib/types';
 import { useFaceImages } from '../lib/useImages';
+import { Rich } from '../components/Rich';
+import { CLARITY_QUESTIONS, CLARITY_WORDS } from '../lib/clarity';
 
 export function newSession(game: GameId) {
   const now = Date.now();
@@ -16,7 +18,7 @@ export function newSession(game: GameId) {
     id: uid(),
     game,
     form: GAMES[game].defaultForm,
-    title: `${game === 'coaching' ? 'אימון' : 'סשן'} ${new Date(now).toLocaleDateString('he-IL')}`,
+    title: `${game === 'coaching' ? 'אימון' : game === 'clarity' ? 'רגע בהירות' : 'סשן'} ${new Date(now).toLocaleDateString('he-IL')}`,
     mode: 'personal',
     participants: '',
     summary: '',
@@ -49,6 +51,13 @@ export function Home({ game }: { game: GameId }) {
     if (game === 'faces') {
       faces.slice(0, 12).forEach((f) => items.push({ key: f.id, url: urls.get(f.id) }));
       refl.words.slice(0, 6).forEach((w) => items.push({ key: w.id, word: w.text }));
+    } else if (game === 'clarity') {
+      // מילה, תמונה, שאלה לסירוגין
+      for (let i = 0; i < 6; i++) {
+        items.push({ key: `w${i}`, word: CLARITY_WORDS[i * 7] });
+        if (coach[i * 5]) items.push({ key: `p${i}`, url: urls.get(coach[i * 5].id) });
+        items.push({ key: `q${i}`, word: CLARITY_QUESTIONS[i * 9] });
+      }
     } else {
       coach.slice(0, 16).forEach((c) => items.push({ key: c.id, url: urls.get(c.id), caption: c.word }));
     }
@@ -64,7 +73,9 @@ export function Home({ game }: { game: GameId }) {
           { title: 'ספריית פנים', text: `${faces.length} מתוך ${MAX_FACES} פנים`, path: '/faces/library' },
           { title: 'ספריית השתקפויות', text: `${refl.words.length + refl.blanks} מתוך ${MAX_REFLECTIONS} קלפים`, path: '/faces/words' },
         ]
-      : [{ title: 'ספריית קלפים', text: `${coach.length} מתוך ${MAX_COACH} קלפים`, path: '/coaching/library' }];
+      : game === 'clarity'
+        ? [{ title: 'החפיסות', text: `${CLARITY_WORDS.length} מילים · ${CLARITY_QUESTIONS.length} שאלות · ${coach.length} תמונות`, path: '/clarity/library' }]
+        : [{ title: 'ספריית קלפים', text: `${coach.length} מתוך ${MAX_COACH} קלפים`, path: '/coaching/library' }];
 
   const all = [
     { title: 'סשן חדש', text: 'שליפה, הערה לכל קלף, ותצוגה לקבוצה.', onClick: () => newSession(game), primary: true },
@@ -83,7 +94,9 @@ export function Home({ game }: { game: GameId }) {
             <br />
             {cfg.heroLines[1]}
           </h1>
-          <p>{cfg.about} הספריות משותפות לכל המכשירים, והסשנים נשמרים במכשיר שלך.</p>
+          <p>
+            <Rich text={cfg.about} /> הספריות משותפות לכל המכשירים, והסשנים נשמרים במכשיר שלך.
+          </p>
         </motion.div>
       </section>
 

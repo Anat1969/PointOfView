@@ -21,6 +21,22 @@ export function CardFace({ card, url, big = false }: { card: SessionCard; url?: 
       </div>
     );
   }
+  if (card.kind === 'photo') {
+    return (
+      <div className={`card-face photo ${big ? 'big' : ''}`}>
+        {url ? <img src={url} alt="" draggable={false} /> : <div className="missing">התמונה נמחקה מהספרייה</div>}
+        <span className="card-tag">תמונה</span>
+      </div>
+    );
+  }
+  if (card.kind === 'word' || card.kind === 'question') {
+    return (
+      <div className={`card-face ${card.kind} ${big ? 'big' : ''}`}>
+        <span className="card-tag">{card.kind === 'word' ? 'מילה' : 'שאלה'}</span>
+        <span className="clarity-text">{card.text}</span>
+      </div>
+    );
+  }
   const blank = isBlank(card);
   return (
     <div className={`card-face reflection ${blank ? 'blank' : ''} ${big ? 'big' : ''}`}>

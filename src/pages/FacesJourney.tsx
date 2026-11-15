@@ -4,6 +4,7 @@ import { CardFace } from '../components/CardFace';
 import { Commit } from '../components/Commit';
 import { Dictate, appendText } from '../components/Dictate';
 import { VisionStep } from '../components/VisionStep';
+import { Rich } from '../components/Rich';
 import { isBlank, reflectionDeck } from '../lib/deck';
 import { FACES_STEPS as STEPS, MIRRORS } from '../lib/facesJourney';
 import { toast } from '../lib/feedback';
@@ -240,8 +241,12 @@ export function FacesJourney({ s, update, onSave }: { s: Session; update: (p: Pa
                     <span className="label">
                       מראה {mirror + 1} · {MIRRORS[mirror].name}
                     </span>
-                    <h2>{MIRRORS[mirror].title}</h2>
-                    <p className="muted">{MIRRORS[mirror].explain}</p>
+                    <h2>
+                      <Rich text={MIRRORS[mirror].title} />
+                    </h2>
+                    <p className="muted">
+                      <Rich text={MIRRORS[mirror].explain} />
+                    </p>
                     <ul className="questions">
                       {MIRRORS[mirror].questions.map((q) => (
                         <li key={q}>{q}</li>
@@ -303,7 +308,11 @@ export function FacesJourney({ s, update, onSave }: { s: Session; update: (p: Pa
             <div className="lever">
               <div className="lever-cards">
                 <span className="label">שלב 4 · מנוף לפעולה</span>
-                {s.insight && <blockquote className="insight-quote">{s.insight}</blockquote>}
+                {s.insight && (
+                  <blockquote className="insight-quote">
+                    <mark className="hl">{s.insight}</mark>
+                  </blockquote>
+                )}
                 <h2>עם אילו פנים תצא לפעולה?</h2>
                 <div className="companion-grid" role="radiogroup" aria-label="הפנים שילוו את הפעולה">
                   {[0, 1, 2].map((i) => (

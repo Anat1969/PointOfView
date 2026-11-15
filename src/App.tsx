@@ -6,6 +6,7 @@ import { GAMES } from './lib/games';
 import { loadLibrary } from './lib/library';
 import { useRoute, type Route } from './lib/router';
 import { CoachLibrary } from './pages/CoachLibrary';
+import { ClarityLibrary } from './pages/ClarityLibrary';
 import { Faces } from './pages/Faces';
 import { History } from './pages/History';
 import { Home } from './pages/Home';
@@ -66,7 +67,7 @@ export function App() {
         >
           {route.page === 'suite' && <Suite />}
           {route.page === 'home' && <Home game={route.game} />}
-          {route.page === 'library' && (route.game === 'faces' ? <Faces /> : <CoachLibrary />)}
+          {route.page === 'library' && (route.game === 'faces' ? <Faces /> : route.game === 'clarity' ? <ClarityLibrary /> : <CoachLibrary />)}
           {route.page === 'words' && <Reflections />}
           {route.page === 'history' && <History game={route.game} />}
           {route.page === 'session' && <SessionPage id={route.id} game={route.game} />}

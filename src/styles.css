@@ -750,3 +750,110 @@ input:not([type]), input[type='text'], input[type='password'], textarea, .lib-no
 .link-btn { all: unset; cursor: pointer; font-size: 13px; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; margin-inline-start: auto; }
 .link-btn:hover { color: #a02828; }
 .link-btn:focus-visible { outline: 2px solid var(--refl); outline-offset: 2px; }
+
+/* ---------- טיפוגרפיה חוויתית (בקשת ענת): פונטים גדולים, כותרות מודגשות בגופן תצוגה, תובנות מרוקרות ---------- */
+:root { --display: 'Frank Ruhl Libre', 'IBM Plex Sans Hebrew', serif; --marker: rgba(255, 204, 64, .82); --muted: #43464d; }
+body { font-size: 18px; }
+.label, .mono { font-size: 13.5px; color: #464950; }
+.btn { font-size: 17px; }
+.btn.sm { font-size: 15.5px; }
+.btn.xs { font-size: 14.5px; }
+.topnav-links a { font-size: 17px; }
+.segmented button { font-size: 16px; }
+.page-head h1, .hero h1, .suite-head h1 { font-family: var(--display); font-weight: 700; letter-spacing: -.015em; color: #101114; }
+.step-body h2, .empty h2, .board-empty h2, .history-body h2, .dialog h2, .vision-side h2 { font-family: var(--display); font-weight: 700; color: #101114; line-height: 1.18; }
+.step-body h2 { font-size: clamp(26px, 2.9vw, 40px); }
+.topic h2 { font-size: clamp(34px, 4.2vw, 60px); font-weight: 900; }
+.hero p, .suite-head p, .lead { font-size: 21px; font-weight: 400; color: #25272c; line-height: 1.55; }
+.tile-title { font-family: var(--display); font-weight: 700; font-size: 31px; }
+.tile-text { font-size: 17px; }
+.box-title { font-family: var(--display); font-weight: 700; }
+.box-tag { font-size: 20px; }
+.questions { font-size: 19px; font-weight: 500; color: #1d1f23; }
+.inspiration { font-size: 20px; }
+.example { font-size: 16px; color: #3d4046; }
+.focus-card { font-size: 16px; }
+.map-label { font-size: 16px; font-weight: 600; }
+.station-notes { font-size: 17px; }
+.station-notes strong { font-weight: 700; }
+.vision-what { font-size: 18px; font-weight: 600; }
+.vision-distill { font-family: var(--display); font-size: 22px; font-weight: 700; line-height: 1.3; }
+.wall-next-what { font-family: var(--display); font-weight: 700; }
+textarea, input:not([type]), input[type='text'] { font-size: 18px; }
+.insight-quote {
+  font-family: var(--display); font-size: clamp(22px, 2.3vw, 30px); font-weight: 700; line-height: 1.4;
+  background: #fffdf5; color: #101114; border-inline-start: 6px solid #d99a1e; padding: 14px 18px; box-shadow: var(--shadow-1);
+}
+mark.hl {
+  color: inherit; font-weight: 700; padding: 0 .12em;
+  background: linear-gradient(transparent 50%, var(--marker) 50%, var(--marker) 90%, transparent 90%);
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
+.tile.primary mark.hl, .on-dark mark.hl { color: #fff; background: linear-gradient(transparent 55%, rgba(217, 154, 30, .7) 55%, rgba(217, 154, 30, .7) 90%, transparent 90%); }
+@media (max-width: 760px) {
+  body { font-size: 17px; }
+  .step-body h2 { font-size: 23px; }
+  .topic h2 { font-size: 28px; }
+  .hero p, .suite-head p, .lead { font-size: 18px; }
+  .questions { font-size: 17px; }
+}
+
+/* ---------- רגע בהירות: מילה, שאלה ותמונה ---------- */
+.box-clarity .box-lid { background: radial-gradient(120% 90% at 80% 0%, #c9933a 0%, #7a4f1c 55%, #3a250c 100%); }
+.back-word { background: repeating-linear-gradient(45deg, rgba(255,255,255,.09) 0 6px, transparent 6px 12px), linear-gradient(160deg, #d6a043, #6b4316); }
+.back-question { background: repeating-linear-gradient(-45deg, rgba(255,255,255,.08) 0 6px, transparent 6px 12px), linear-gradient(160deg, #3f8a77, #163d34); }
+.back-photo { background: repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0 4px, transparent 4px 10px), linear-gradient(160deg, #5f6268, #1d1e22); }
+.mini-word .mini-layer, .mini-word .mini-top { background: linear-gradient(160deg, #d6a043, #6b4316); }
+.mini-question .mini-layer, .mini-question .mini-top { background: linear-gradient(160deg, #3f8a77, #163d34); }
+.mini-photo .mini-layer, .mini-photo .mini-top { background: linear-gradient(160deg, #5f6268, #1d1e22); }
+
+.card-face.word, .card-face.question { display: grid; place-items: center; padding: 14px 10px; text-align: center; container-type: inline-size; }
+.card-face.word { background: radial-gradient(120% 90% at 30% 10%, #fbe8bd 0%, #e5bb68 48%, #b07624 100%); color: #2a1904; }
+.card-face.question { background: radial-gradient(120% 90% at 30% 10%, #eaf5f1 0%, #b3d7cb 52%, #5f9a88 100%); color: #0d2721; }
+.card-face.photo { background: #222; }
+.card-face.photo img { width: 100%; height: 100%; object-fit: cover; }
+.clarity-text { font-family: var(--display); font-weight: 700; line-height: 1.15; overflow-wrap: anywhere; }
+.card-face.word .clarity-text { font-size: clamp(15px, 17cqw, 72px); font-weight: 900; }
+.card-face.question .clarity-text { font-size: clamp(11px, 9.5cqw, 40px); }
+.card-face.big.word .clarity-text { font-size: clamp(40px, 7vw, 110px); }
+.card-face.big.question .clarity-text { font-size: clamp(26px, 3.6vw, 56px); }
+
+.triad-step { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 14px; min-height: 0; text-align: center; }
+.triad-head { display: grid; gap: 4px; justify-items: center; }
+.triad-head .muted { max-width: 640px; }
+.triad { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; width: 100%; max-width: calc((100dvh - var(--bar-h) - 380px) * 2.15 + 36px); min-width: 0; margin-inline: auto; perspective: 1200px; align-self: center; }
+.triad-slot { all: unset; box-sizing: border-box; display: grid; gap: 6px; min-width: 0; cursor: default; }
+.triad-slot:not(:disabled) { cursor: pointer; }
+.triad-slot:focus-visible { outline: 2px solid var(--refl); outline-offset: 4px; }
+.triad-slot.active .map-card { outline: 3px solid #d99a1e; outline-offset: 4px; border-radius: 12px; }
+.triad-label { font-family: var(--display); font-size: 20px; font-weight: 700; text-align: center; }
+.triad-pile { position: absolute; inset: 0; border-radius: 12px; transform-style: preserve-3d; transition: transform .25s; }
+.triad-slot:not(:disabled):hover .triad-pile { transform: translateY(-6px) rotateX(10deg); }
+.pile-layer { position: absolute; inset: 0; border-radius: 12px; background: inherit; filter: brightness(.75); }
+.pile-top { position: absolute; inset: 0; border-radius: 12px; background: inherit; display: grid; place-content: center; gap: 6px; text-align: center; color: #fff; box-shadow: var(--shadow-2); }
+.pile-top b { font-family: var(--display); font-size: clamp(22px, 2.8vw, 40px); font-weight: 900; }
+.pile-top .mono { color: rgba(255,255,255,.85); }
+.clarity .map-back { border-radius: 12px; }
+.clarity-quote { margin: 2px 0; font-family: var(--display); font-weight: 900; font-size: clamp(30px, 3.2vw, 48px); line-height: 1.12; }
+.clarity-quote.q-word { color: #7a4a12; }
+.clarity-quote.q-question { color: #17463b; font-size: clamp(24px, 2.5vw, 36px); }
+.clarity-moment { margin: 0; font-family: var(--display); font-size: clamp(24px, 2.6vw, 34px); font-weight: 700; line-height: 1.35; }
+.lever-cards .triad { max-width: 520px; }
+
+.lib-tabs { margin-top: 18px; }
+.lib-tabs .mono { margin-inline-start: 6px; }
+.clarity-grid { list-style: none; padding: 0; margin: 20px 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; perspective: 1000px; }
+.clarity-grid.questions-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.clarity-tile { aspect-ratio: 5 / 7; border-radius: 12px; display: grid; place-items: center; padding: 12px; text-align: center; box-shadow: var(--shadow-2); container-type: inline-size; overflow: hidden; }
+.clarity-tile.word { background: radial-gradient(120% 90% at 30% 10%, #fbe8bd 0%, #e5bb68 48%, #b07624 100%); color: #2a1904; }
+.clarity-tile.word .clarity-text { font-size: clamp(18px, 15cqw, 40px); font-weight: 900; }
+.clarity-tile.question { aspect-ratio: auto; min-height: 130px; background: radial-gradient(120% 90% at 30% 10%, #eaf5f1 0%, #b3d7cb 52%, #5f9a88 100%); color: #0d2721; }
+.clarity-tile.question .clarity-text { font-size: 22px; }
+.clarity-tile.photo { padding: 0; background: #333; }
+.clarity-tile.photo img { width: 100%; height: 100%; object-fit: cover; }
+@media (max-width: 760px) {
+  .triad { gap: 8px; max-width: none; }
+  .triad-label { font-size: 15px; }
+  .clarity-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }
+  .clarity-grid.questions-grid { grid-template-columns: 1fr; }
+}
