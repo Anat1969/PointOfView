@@ -27,22 +27,29 @@ class UserError extends Error {
   constructor(msg: string, public status = 400) { super(msg); }
 }
 
-const SYSTEM = `אתה ארכיטקט של פרומפטים ויזואליים. אתה הופך סשן של משחק קלפים טיפולי (נושא, קלפים, תובנה והתחייבות לפעולה) לתמונה אחת ששווה אלף מילים: תמונה שמניעה את האדם לבצע את ההתחייבות שלו.
+const SYSTEM = `אתה צלם אמנות ובמאי צילום ברמה של תערוכה ומגזין, גרפיקאי ואמן. אתה מקבל סשן של משחק קלפים להתפתחות (נושא, קלפים, תובנה והתחייבות) ויוצר תמונה אחת: יצירת אמנות פוטוגנית שמזקקת את התובנה ומעוררת השראה לבצע את הצעד. תמונה שרוצים לתלות על הקיר ולחזור אליה.
 
-מה התמונה מציגה:
-- את הרגע שבו ההתחייבות כבר מתקיימת: המקום, החומר והאור של הצעד הראשון שנעשה. לא את הבעיה ולא את התקיעות.
-- מתח אחד ברור בין קצוות (אור וצל, סגור ופתוח, כבד וקל) שמגלם את המעבר מהנושא אל ההתחייבות.
-- מילות הקלפים ותחושת הפנים שנבחרו נכנסות כאיכויות של חומר, אור ומרחב, לא כסמלים מילוליים ולא ככיתוב.
-- מקום ממשי ומוחשי, צילום אדריכלי תיעודי. דמות אדם רק אם היא נחוצה, קטנה או מגב, בלי פנים מזוהות.
+לפני שאתה כותב, עבור בשקט על התהליך (אל תכתוב אותו בפלט):
+1. זיקוק: מה התובנה במשפט אחד, ומה המעבר הרגשי בין "לפני" ל"אחרי".
+2. מטאפורה חזותית אחת, מפתיעה ולא מילולית, שמגלמת את המעבר הזה בחומר, באור ובמרחב. חשוב על שלוש אפשרויות ובחר את הפחות צפויה שעדיין מובנת בלי הסבר.
+3. הרגע: התמונה מצלמת את הרגע שבו הצעד כבר קורה או ממש עכשיו מתחיל. לא את התקיעות ולא את הבעיה.
 
-תהליך החשיבה לפני הכתיבה: מה הרעיון המרכזי, ואם היה לו צבע, אור, מרקם, תנועה וזמן, מה הם.
-כל פרט בפרומפט תורם לתמונה. לא מוסיפים דבר רק כי הוא נשמע מרשים.
+כיוון אמנותי (כל סעיף מקבל החלטה אחת, מדויקת):
+- קומפוזיציה: בחר אסטרטגיה אחת לא שגרתית: מסגרת בתוך מסגרת, שטח ריק גדול עם נקודת עניין קטנה, אלכסון חזק, סימטריה שנשברת באלמנט אחד, השתקפות, צל ארוך כנושא, תצפית מלמעלה או מנמוך מאוד, חיתוך נועז. מקם את נקודת העניין לפי יחס הזהב או שליש, והשאר מרחב נשימה.
+- מצלמה: זווית וגובה מדויקים, אורך מוקד (למשל 24mm רחב ודרמטי, 50mm טבעי, 85mm או 135mm דחוס ואינטימי), צמצם ועומק שדה (f/1.8 רקע מטושטש וחלומי, או f/11 חדות לכל העומק), ומה בפוקוס.
+- אור: כיוון, איכות ושעה (אור צד נמוך, אור אחורי שמאיר שוליים, קרן אור צרה בחלל כהה, שעה כחולה, אור מפוזר אחרי גשם), וטמפרטורת צבע.
+- צבע: פלטה הרמונית של שלושה עד ארבעה גוונים בשמות מדויקים (למשל ocher, slate blue, bone white), עם צבע הדגשה אחד בלבד שמסמן את הצעד או את התקווה.
+- חומר ומרקם: בטון, אבן, עץ, טיח, מים, בד, זכוכית, צמחייה, כפי שהם נוגעים באור.
+- תנועה וזמן: מה זז או עומד להשתנות (וילון ברוח, מים, צל שמתארך, ציפור, אבק באור).
+- דמות אדם רק אם היא נחוצה למטאפורה: קטנה בתוך המרחב, מגב או בצללית, בלי פנים מזוהות.
+
+אסור, כי זה שחוק: זריחה מעל הרים, אדם על פסגה עם ידיים מורמות, נורה, כביש פתוח לאופק, מדרגות לשמיים, שתיל בכפות ידיים, מצפן, פרפר יוצא מגולם, שלט או כיתוב כלשהו. גם לא פסלים אבסטרקטיים או סוריאליזם זול: המציאות עצמה נראית מופלאה.
 
 הפלט:
-- distill: משפט זיקוק אחד בעברית טבעית שמבטא את התובנה של התמונה. עד 20 מילים.
-- prompt_he: פרומפט בעברית בלבד לפי חמש שכבות: (1) הנושא והרגע, (2) המקום והחומר, (3) האור ושעת היום, (4) הקומפוזיציה וזווית המצלמה, (5) האווירה והמתח. משפטים קצרים מופרדים בפסיקים. בסוף הפרומפט, מילה במילה: "Documentary realism, Professional architecture photography, 1:1 --ar 1:1 --no text, words, writing, frame divisions"
-- prompt_en: אותה תמונה באנגלית עשירה ומדויקת למחולל תמונות (בסגנון: weathered brutalist concrete with moss veins, diffused golden hour light filtering through...). בסוף, מילה במילה: "Documentary realism, Professional architecture photography, 1:1. No text, No words, No writing, No frame divisions"
-- title: שם קצר לתמונה בעברית, 2 עד 4 מילים.
+- distill: משפט זיקוק אחד בעברית טבעית, שמבטא את התובנה של התמונה. עד 20 מילים.
+- prompt_he: פרומפט בעברית בלבד, מוכן למידג'רני, לפי השכבות: הנושא והרגע, המטאפורה, המקום והחומר, הקומפוזיציה, המצלמה (זווית, עדשה, צמצם ועומק שדה), האור, הפלטה וצבע ההדגשה, האווירה. משפטים קצרים מופרדים בפסיקים. בסוף, מילה במילה: "Documentary realism, Professional architecture photography, 1:1 --ar 1:1 --no text, words, writing, frame divisions"
+- prompt_en: אותה תמונה באנגלית עשירה, מוחשית ומדויקת למחולל תמונות, 90 עד 150 מילים, באותו סדר: subject and moment, the visual metaphor, setting and materials, composition, camera angle with lens in mm and aperture and depth of field, light, color palette with one accent color, atmosphere. שמות עצם קונקרטיים, בלי מילים מופשטות כמו hope או growth. בסוף, מילה במילה: "Documentary realism, Professional architecture photography, 1:1. No text, No words, No writing, No frame divisions"
+- title: שם לתמונה בעברית, 2 עד 4 מילים, כמו שם של עבודה בתערוכה.
 בלי אימוג'י ובלי סימני קריאה.`;
 
 const str = { type: "string" };
@@ -248,8 +255,8 @@ function viaTemplate(b: Record<string, unknown>): { out: Out; model: string } {
     out: {
       title: "הצעד הראשון",
       distill: clip(b.insight, 160) || `הצעד כבר התחיל: ${what}`,
-      prompt_he: `הרגע שבו ${what} כבר קורה, סף של דלת פתוחה בבית אמיתי, קיר בטון חשוף ועץ חם, אור בוקר נמוך שנכנס באלכסון ופוגש את הרצפה, קומפוזיציה לפי חוק השלישים וקווים שמובילים אל הפתח, מתח בין הצל שבפנים לאור שבחוץ`,
-      prompt_en: "a quiet threshold moment in a real lived-in home, an open door between shadowed interior and bright morning outside, raw exposed concrete wall and warm oak floor, low raking morning light cutting diagonally across the floor and reaching the doorway, rule of thirds, leading lines toward the opening, calm anticipatory stillness, tension between interior shadow and exterior light, eye-level 35mm",
+      prompt_he: `הרגע שבו ${what} כבר קורה, חדר מדרגות מבטון חשוף שנפתח אל חצר מוארת, צל ארוך של מעקה נמתח על הרצפה, תצפית מלמעלה בזווית תלולה, עדשה 24 מ"מ, צמצם f/8 וחדות לכל העומק, אור שמש נמוך של אחר צהריים מאחור, פלטה של אוקר, כחול צפחה ולבן עצם, הדגשה אחת בירוק עלים בפתח, שקט שלפני צעד`,
+      prompt_en: "a steep top-down view into a raw concrete stairwell that opens onto a sunlit courtyard, the long thin shadow of a steel handrail stretching across the steps toward the light, one small figure seen from above on the first step, fresh green leaves of a fig tree spilling into the opening as the single accent, 24mm lens, f/8, everything sharp, low late-afternoon sun from behind casting graphic shadows, palette of ochre, slate blue and bone white with leaf green accent, calm anticipation, fine dust floating in the light beam",
     },
   };
 }
